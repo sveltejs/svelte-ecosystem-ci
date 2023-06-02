@@ -36,8 +36,10 @@ on:
         options:
           - eslint-plugin-svelte
           - language-tools
+          - mdsvex
           - prettier-plugin-svelte
           - rollup-plugin-svelte
+          - skeleton
           - svelte-loader
           - svelte-preprocess
           - sveltekit

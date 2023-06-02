@@ -19,7 +19,7 @@
     "*": [
       "prettier --write --ignore-unknown"
     ],
-    "**/*.js": [
+    "*.ts": [
       "eslint"
     ]
   },

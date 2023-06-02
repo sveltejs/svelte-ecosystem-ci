@@ -40,6 +40,7 @@ on:
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
+          - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
           - sveltekit

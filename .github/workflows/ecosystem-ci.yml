@@ -52,6 +52,7 @@ jobs:
           - svelte-loader
           - svelte-preprocess
           - sveltekit
+          - tanstack-query
           - vite-plugin-svelte
       fail-fast: false
     steps:

@@ -46,6 +46,7 @@ on:
           - svelte-loader
           - svelte-preprocess
           - sveltekit
+          - tanstack-query
           - vite-plugin-svelte
 
 jobs:

@@ -7,5 +7,8 @@ export async function test(options: RunOptions) {
 		repo: 'melt-ui/melt-ui',
 		branch: 'develop',
 		test: 'pnpm test',
+		overrides: {
+			'@sveltejs/kit': '^1.22.0', // needed until melt upgrades to SK v2
+		},
 	})
 }

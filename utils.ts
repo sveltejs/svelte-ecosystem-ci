@@ -10,10 +10,8 @@ import type {
 	RunOptions,
 	Task,
 } from './types.d.ts'
-//eslint-disable-next-line n/no-unpublished-import
-import { detect, AGENTS, Agent, getCommand } from '@antfu/ni'
+import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
 import actionsCore from '@actions/core'
-// eslint-disable-next-line n/no-unpublished-import
 import * as semver from 'semver'
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS
@@ -44,9 +42,9 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		stdio: 'pipe',
 		cwd,
 	})
-	proc.stdin && process.stdin.pipe(proc.stdin)
-	proc.stdout && proc.stdout.pipe(process.stdout)
-	proc.stderr && proc.stderr.pipe(process.stderr)
+	if (proc.stdin) process.stdin.pipe(proc.stdin)
+	if (proc.stdout) proc.stdout.pipe(process.stdout)
+	if (proc.stderr) proc.stderr.pipe(process.stderr)
 	const result = await proc
 
 	if (isGitHubActions) {
@@ -152,7 +150,7 @@ export async function setupRepo(options: RepoOptions) {
 
 function toCommand(
 	task: Task | Task[] | void,
-	agent: Agent,
+	agent: (typeof AGENTS)[number],
 ): ((scripts: any) => Promise<any>) | void {
 	return async (scripts: any) => {
 		const tasks = Array.isArray(task) ? task : [task]
@@ -162,7 +160,7 @@ function toCommand(
 			} else if (typeof task === 'string') {
 				if (scripts[task] != null) {
 					const runTaskWithAgent = getCommand(agent, 'run', [task])
-					await $`${runTaskWithAgent}`
+					await $`${serializeCommand(runTaskWithAgent)}`
 				} else {
 					await $`${task}`
 				}
@@ -174,7 +172,7 @@ function toCommand(
 						task.script,
 						...(task.args ?? []),
 					])
-					await $`${runTaskWithAgent}`
+					await $`${serializeCommand(runTaskWithAgent)}`
 				} else {
 					throw new Error(
 						`invalid task, script "${task.script}" does not exist in package.json`,
@@ -231,7 +229,7 @@ export async function runInRepo(options: RunOptions & RepoOptions) {
 		}
 		options.agent = detectedAgent
 	}
-	if (!AGENTS[options.agent]) {
+	if (!AGENTS.includes(options.agent)) {
 		throw new Error(
 			`Invalid agent ${options.agent}. Allowed values: ${Object.keys(
 				AGENTS,
@@ -252,7 +250,7 @@ export async function runInRepo(options: RunOptions & RepoOptions) {
 
 	if (verify && test) {
 		const frozenInstall = getCommand(agent, 'frozen')
-		await $`${frozenInstall}`
+		await $`${serializeCommand(frozenInstall)}`
 		await beforeBuildCommand?.(pkg.scripts)
 		await buildCommand?.(pkg.scripts)
 		await beforeTestCommand?.(pkg.scripts)
@@ -343,13 +341,13 @@ export async function buildSvelte({ verify = false }) {
 	const frozenInstall = getCommand('pnpm', 'frozen')
 	const runBuild = getCommand('pnpm', 'run', ['build'])
 	const runTest = getCommand('pnpm', 'run', ['test'])
-	await $`${frozenInstall}`
+	await $`${serializeCommand(frozenInstall)}`
 	const oldPublish = process.env.PUBLISH
 	process.env.PUBLISH = '1'
-	await $`${runBuild}` // set publish so build bundles deps
+	await $`${serializeCommand(runBuild)}` // set publish so build bundles deps
 	process.env.PUBLISH = oldPublish
 	if (verify) {
-		await $`${runTest}`
+		await $`${serializeCommand(runTest)}`
 	}
 }
 

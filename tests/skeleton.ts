@@ -5,12 +5,10 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'skeletonlabs/skeleton',
-		branch: 'dev',
+		branch: 'next',
+		beforeTest: 'pnpm --dir packages/skeleton-svelte exec playwright install',
 		test: ['test', 'check'].map(
-			(script) => `pnpm --dir packages/skeleton ${script}`,
+			(script) => `pnpm --dir packages/skeleton-svelte ${script}`,
 		),
-		overrides: {
-			'svelte-check': 'latest', // needed for svelte-4, should be `true` but language-tools build still fails
-		},
 	})
 }

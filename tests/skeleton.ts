@@ -7,6 +7,7 @@ export async function test(options: RunOptions) {
 		repo: 'skeletonlabs/skeleton',
 		branch: 'main',
 		build: 'pnpm --dir packages/skeleton-svelte build',
+		beforeTest: 'pnpm --dir packages/skeleton-svelte exec playwright install',
 		test: ['test', 'check'].map(
 			(script) => `pnpm --dir packages/skeleton-svelte ${script}`,
 		),

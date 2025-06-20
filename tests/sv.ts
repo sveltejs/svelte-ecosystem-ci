@@ -1,0 +1,12 @@
+import { runInRepo } from '../utils.ts'
+import { RunOptions } from '../types.js'
+
+export async function test(options: RunOptions) {
+	await runInRepo({
+		...options,
+		repo: 'sveltejs/cli',
+		branch: 'main',
+		build: 'pnpm build',
+		test: 'pnpm test',
+	})
+}

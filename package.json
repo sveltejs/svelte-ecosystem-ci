@@ -25,11 +25,11 @@
       "eslint --fix"
     ]
   },
-  "packageManager": "pnpm@10.2.1",
+  "packageManager": "pnpm@10.12.4",
   "type": "module",
   "engines": {
     "node": ">=22",
-    "pnpm": "^10.2.1"
+    "pnpm": "^10.12.4"
   },
   "repository": {
     "type": "git",
@@ -44,8 +44,7 @@
     "@actions/core": "^1.11.1",
     "cac": "^6.7.14",
     "execa": "^9.5.2",
-    "node-fetch": "^3.3.2",
-    "yaml": "^2.8.0"
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@antfu/ni": "^24.3.0",

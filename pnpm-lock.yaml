@@ -24,9 +24,6 @@ importers:
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
-      yaml:
-        specifier: ^2.8.0
-        version: 2.8.0
     devDependencies:
       '@antfu/ni':
         specifier: ^24.3.0

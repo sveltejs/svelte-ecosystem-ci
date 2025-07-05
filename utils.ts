@@ -13,7 +13,7 @@ import type {
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
 import actionsCore from '@actions/core'
 import * as semver from 'semver'
-import * as yaml from 'yaml'
+import ecosystemCIPkg from './package.json' with { type: 'json' }
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS
 
@@ -435,6 +435,12 @@ async function overridePackageManagerVersion(
 			// avoid bug with absolute overrides in pnpm 7.18.0
 			overrideWithVersion = '7.18.1'
 		}
+
+		const [, ecosystemCIPMVersion] = ecosystemCIPkg.packageManager.split('@')
+		if (semver.major(versionInUse) === semver.major(ecosystemCIPMVersion)) {
+			// override with ecosystem-ci's pm version
+			overrideWithVersion = ecosystemCIPMVersion
+		}
 	}
 	if (overrideWithVersion) {
 		console.warn(
@@ -486,32 +492,15 @@ export async function applyPackageOverrides(
 	await overridePackageManagerVersion(pkg, pm)
 
 	if (pm === 'pnpm') {
-		const workspaceYamlPath = path.join(dir, 'pnpm-workspace.yaml')
-		// updates `overrides` if we're in a workspace
-		if (fs.existsSync(workspaceYamlPath)) {
-			const workspaceYaml = await fs.promises.readFile(
-				workspaceYamlPath,
-				'utf8',
-			)
-			const workspaceConfig = yaml.parse(workspaceYaml)
-			workspaceConfig.overrides = { ...workspaceConfig.overrides, ...overrides }
-
-			await fs.promises.writeFile(
-				workspaceYamlPath,
-				yaml.stringify(workspaceConfig),
-				'utf8',
-			)
-		} else {
-			pkg.pnpm ??= {}
-			pkg.pnpm.overrides = {
-				...pkg.pnpm.overrides,
-				...overrides,
-			}
+		pkg.pnpm ??= {}
+		pkg.pnpm.overrides = {
+			...pkg.pnpm.overrides,
+			...overrides,
 		}
-		pkg.devDependencies = {
-			...pkg.devDependencies,
-			...overrides, // overrides must be present in devDependencies or dependencies otherwise they may not work
-		}
+		// pkg.devDependencies = {
+		// 	...pkg.devDependencies,
+		// 	...overrides, // overrides must be present in devDependencies or dependencies otherwise they may not work
+		// }
 	} else if (pm === 'yarn') {
 		pkg.resolutions = {
 			...pkg.resolutions,

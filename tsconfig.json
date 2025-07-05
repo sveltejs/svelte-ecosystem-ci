@@ -15,6 +15,7 @@
 		"esModuleInterop": true,
 		"useUnknownInCatchVariables": false,
 		"allowSyntheticDefaultImports": true,
+		"resolveJsonModule": true,
 		"lib": ["esnext"],
 		"sourceMap": true
 	}

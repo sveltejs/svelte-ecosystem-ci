@@ -10,10 +10,5 @@ export async function test(options: RunOptions) {
 		test: ['test', 'check'].map(
 			(script) => `pnpm --dir packages/skeleton-svelte ${script}`,
 		),
-		overrides: {
-			'svelte-check': true,
-			'@sveltejs/kit': true,
-			'@sveltejs/vite-plugin-svelte': true,
-		},
 	})
 }

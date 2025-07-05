@@ -13,6 +13,7 @@ import type {
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
 import actionsCore from '@actions/core'
 import * as semver from 'semver'
+import * as yaml from 'yaml'
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS
 
@@ -485,19 +486,31 @@ export async function applyPackageOverrides(
 	await overridePackageManagerVersion(pkg, pm)
 
 	if (pm === 'pnpm') {
-		if (!pkg.devDependencies) {
-			pkg.devDependencies = {}
+		const workspaceYamlPath = path.join(dir, 'pnpm-workspace.yaml')
+		// updates `overrides` if we're in a workspace
+		if (fs.existsSync(workspaceYamlPath)) {
+			const workspaceYaml = await fs.promises.readFile(
+				workspaceYamlPath,
+				'utf8',
+			)
+			const workspaceConfig = yaml.parse(workspaceYaml)
+			workspaceConfig.overrides = { ...workspaceConfig.overrides, ...overrides }
+
+			await fs.promises.writeFile(
+				workspaceYamlPath,
+				yaml.stringify(workspaceConfig),
+				'utf8',
+			)
+		} else {
+			pkg.pnpm ??= {}
+			pkg.pnpm.overrides = {
+				...pkg.pnpm.overrides,
+				...overrides,
+			}
 		}
 		pkg.devDependencies = {
 			...pkg.devDependencies,
 			...overrides, // overrides must be present in devDependencies or dependencies otherwise they may not work
-		}
-		if (!pkg.pnpm) {
-			pkg.pnpm = {}
-		}
-		pkg.pnpm.overrides = {
-			...pkg.pnpm.overrides,
-			...overrides,
 		}
 	} else if (pm === 'yarn') {
 		pkg.resolutions = {

@@ -54,6 +54,7 @@ jobs:
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
+          - sv
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess

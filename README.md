@@ -31,7 +31,7 @@ The repositories are checked out into `workspace` subdirectory as shallow clones
 # how to add a new integration test
 
 - check out the existing [tests](./tests) and add one yourself. Thanks to some utilities it is really easy
-- once you are confidente the suite works, add it to the lists of suites in the [workflows](../../actions/)
+- once you are confidente the suite works, add it to the lists of suites in the [workflows](./.github/workflows/)
 
 > the current utilities focus on pnpm based projects. Consider switching to pnpm or contribute utilities for other pms
 

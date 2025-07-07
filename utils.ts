@@ -485,14 +485,19 @@ export async function applyPackageOverrides(
 	await overridePackageManagerVersion(pkg, pm)
 
 	if (pm === 'pnpm') {
-		pkg.pnpm ??= {}
-		pkg.pnpm.overrides = {
-			...pkg.pnpm.overrides,
-			...overrides,
+		if (!pkg.devDependencies) {
+			pkg.devDependencies = {}
 		}
 		pkg.devDependencies = {
 			...pkg.devDependencies,
 			...overrides, // overrides must be present in devDependencies or dependencies otherwise they may not work
+		}
+		if (!pkg.pnpm) {
+			pkg.pnpm = {}
+		}
+		pkg.pnpm.overrides = {
+			...pkg.pnpm.overrides,
+			...overrides,
 		}
 	} else if (pm === 'yarn') {
 		pkg.resolutions = {

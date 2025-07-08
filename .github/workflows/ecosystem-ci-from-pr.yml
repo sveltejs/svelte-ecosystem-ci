@@ -43,6 +43,7 @@ on:
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
+          - svelte-dev
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
@@ -116,6 +117,7 @@ jobs:
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
+          - svelte-dev
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess

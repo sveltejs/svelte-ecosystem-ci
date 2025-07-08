@@ -26,7 +26,7 @@ cli
 	.option('--release <version>', 'svelte release to use from npm registry')
 	.action(async (suites, options: CommandOptions) => {
 		if (options.commit) {
-			const url = `https://pkg.pr.new/vite@${options.commit}`
+			const url = `https://pkg.pr.new/svelte@${options.commit}`
 			 
 			const { status } = await fetch(url)
 			if (status === 200) {

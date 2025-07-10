@@ -53,7 +53,9 @@ on:
           - svelte-preprocess
           - sveltekit
           - vite-plugin-svelte
-
+      sendDiscordReport:
+        description: "send results to discord"
+        type: boolean
 jobs:
   execute-selected-suite:
     timeout-minutes: 30

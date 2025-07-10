@@ -19,8 +19,8 @@
   - `ECOSYSTEM_CI_GITHUB_APP_ID`: ID of the created GitHub App
   - `ECOSYSTEM_CI_GITHUB_APP_PRIVATE_KEY`: the content of the private key of the created GitHub App
 - sveltejs/svelte-ecosystem-ci
-  - `PR_GITHUB_APP_ID`: ID of the created GitHub App
-  - `PR_GITHUB_APP_PRIVATE_KEY`: the content of the private key of the created GitHub App
+  - `ECOSYSTEM_CI_GITHUB_APP_ID`: ID of the created GitHub App
+  - `ECOSYSTEM_CI_GITHUB_APP_PRIVATE_KEY`: the content of the private key of the created GitHub App
 
 ## (3) Adding workflows to sveltejs/svelte
 

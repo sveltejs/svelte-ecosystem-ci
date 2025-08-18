@@ -58,6 +58,7 @@ jobs:
           - rollup-plugin-svelte
           - skeleton
           - sv
+          - svelte.dev
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess

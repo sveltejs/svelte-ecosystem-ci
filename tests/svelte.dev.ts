@@ -12,8 +12,6 @@ export async function test(options: RunOptions) {
 			'@sveltejs/kit': true,
 			'svelte-check': true,
 			'@sveltejs/vite-plugin-svelte': true,
-			vite: '^7.0.0', // use latest vite, workspace still has 5.x as of adding this, remove later
-			vitest: '^3.2.0', // needed by vite@7
 		},
 	})
 }

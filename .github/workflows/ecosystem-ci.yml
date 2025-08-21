@@ -50,6 +50,7 @@ jobs:
       matrix:
         suite:
           - eslint-plugin-svelte
+          - immich
           - language-tools
           - mdsvex
           - melt-ui

@@ -16,7 +16,7 @@ export async function test(options: RunOptions) {
 			'pnpm --dir web build',
 		],
 		beforeTest: [
-			'pnpm --filter immich-e2e exec playwright install chromium --shell-only',
+			'pnpm --filter immich-e2e exec playwright install chromium --only-shell',
 			'pnpm --filter immich-e2e exec docker compose build',
 		],
 		test: [

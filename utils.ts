@@ -172,7 +172,7 @@ function toCommand(
 	task: Task | Task[] | void,
 	agent: (typeof AGENTS)[number],
 ): ((scripts: any) => Promise<any>) | void {
-	return async (scripts: any) => {
+	return async (scripts = {}) => {
 		const tasks = Array.isArray(task) ? task : [task]
 		for (const task of tasks) {
 			if (task == null || task === '') {

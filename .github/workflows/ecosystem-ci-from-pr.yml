@@ -39,6 +39,7 @@ on:
         options:
           - "-"
           - eslint-plugin-svelte
+          - immich
           - language-tools
           - mdsvex
           - melt-ui
@@ -125,6 +126,7 @@ jobs:
       matrix:
         suite:
           - eslint-plugin-svelte
+          - immich
           - language-tools
           - mdsvex
           - melt-ui

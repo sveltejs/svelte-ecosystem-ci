@@ -10,18 +10,15 @@ export async function test(options: RunOptions) {
 			'@sveltejs/vite-plugin-svelte': true,
 			'@sveltejs/vite-plugin-svelte-inspector': true,
 			'@sveltejs/kit': true,
+			'svelte-check': true,
 		},
 		build: [
 			'pnpm --dir open-api/typescript-sdk build', // required for web build
 			'pnpm --dir web build',
 		],
-		beforeTest: [
-			'pnpm --filter immich-e2e exec playwright install chromium --only-shell',
-			'pnpm --filter immich-e2e exec docker compose build',
-		],
 		test: [
-			//'pnpm --dir web test', // unit & component tests
-			'pnpm --dir e2e test:web', // playwright e2e tests
+			'pnpm --dir web test', // unit & component tests
+			'pnpm --dir web check:svelte', // svelte-check
 		],
 	})
 }

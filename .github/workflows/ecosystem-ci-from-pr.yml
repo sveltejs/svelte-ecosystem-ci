@@ -46,6 +46,7 @@ on:
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
+          - storybook
           - sv
           - svelte-eslint-parser
           - svelte-loader
@@ -139,6 +140,7 @@ jobs:
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
+          - storybook
           - sv
           - svelte-eslint-parser
           - svelte-loader

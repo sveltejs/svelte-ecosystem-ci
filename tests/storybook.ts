@@ -9,5 +9,10 @@ export async function test(options: RunOptions) {
 		build: 'svelte-ecosystem-ci:build',
 		beforeTest: 'svelte-ecosystem-ci:before-test',
 		test: 'svelte-ecosystem-ci:test',
+		overrides: {
+			'@sveltejs/vite-plugin-svelte': true,
+			'@sveltejs/vite-plugin-svelte-inspector': true,
+			'@sveltejs/kit': true,
+		},
 	})
 }

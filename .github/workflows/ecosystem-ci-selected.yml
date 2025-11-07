@@ -41,6 +41,7 @@ on:
         type: choice
         options:
           - eslint-plugin-svelte
+          - immich
           - language-tools
           - mdsvex
           - melt-ui

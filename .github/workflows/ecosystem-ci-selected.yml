@@ -50,6 +50,7 @@ on:
           - skeleton
           - storybook
           - sv
+          - svelte.dev
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess

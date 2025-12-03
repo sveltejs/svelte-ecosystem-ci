@@ -542,6 +542,20 @@ export async function applyPackageOverrides(
 
 	// use of `ni` command here could cause lockfile violation errors so fall back to native commands that avoid these
 	if (pm === 'pnpm') {
+		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
+		if (fs.existsSync(workspaceFile)) {
+			const content = fs.readFileSync(workspaceFile, 'utf-8')
+			if (content.includes('minimumReleaseAge:')) {
+				fs.writeFileSync(
+					workspaceFile,
+					content.replace(
+						/^(\s*minimumReleaseAge\s*:\s*\d+.*)$/,
+						'# $1 -- disabled by ecosystem-ci',
+					),
+					'utf-8',
+				)
+			}
+		}
 		await $`pnpm install --prefer-frozen-lockfile --strict-peer-dependencies false`
 	} else if (pm === 'yarn') {
 		await $`yarn install`

@@ -545,7 +545,7 @@ export async function applyPackageOverrides(
 		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
 		if (fs.existsSync(workspaceFile)) {
 			const content = fs.readFileSync(workspaceFile, 'utf-8')
-			if (content.includes('minimumReleaseAge:')) {
+			if (content.includes('minimumReleaseAge')) {
 				fs.writeFileSync(
 					workspaceFile,
 					content.replace(

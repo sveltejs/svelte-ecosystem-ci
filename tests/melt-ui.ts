@@ -6,6 +6,7 @@ export async function test(options: RunOptions) {
 		...options,
 		repo: 'melt-ui/next-gen',
 		branch: 'main',
+		beforeTest: 'pnpm exec playwright install',
 		test: 'pnpm test',
 	})
 }

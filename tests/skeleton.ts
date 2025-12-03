@@ -7,7 +7,8 @@ export async function test(options: RunOptions) {
 		repo: 'skeletonlabs/skeleton',
 		branch: 'main',
 		build: 'pnpm --dir packages/skeleton-svelte build',
-		test: ['test', 'check'].map(
+		beforeTest: 'pnpm exec playwright install chromium',
+		test: ['exec vitest run', 'check'].map(
 			(script) => `pnpm --dir packages/skeleton-svelte ${script}`,
 		),
 	})

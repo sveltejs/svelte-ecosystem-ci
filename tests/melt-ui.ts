@@ -4,8 +4,8 @@ import { RunOptions } from '../types.ts'
 export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
-		repo: 'melt-ui/melt-ui',
-		branch: 'develop',
+		repo: 'melt-ui/next-gen',
+		branch: 'main',
 		test: 'pnpm test',
 	})
 }

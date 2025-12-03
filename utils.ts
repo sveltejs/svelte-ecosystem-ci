@@ -549,7 +549,7 @@ export async function applyPackageOverrides(
 				fs.writeFileSync(
 					workspaceFile,
 					content.replace(
-						/^(\s*minimumReleaseAge\s*:\s*\d+.*)$/,
+						/^([ \t]*minimumReleaseAge[ \t]*:[ \t]*\d+[^\r\n]*)$/m,
 						'# $1 -- disabled by ecosystem-ci',
 					),
 					'utf-8',

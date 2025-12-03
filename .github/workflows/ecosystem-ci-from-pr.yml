@@ -42,7 +42,6 @@ on:
           - language-tools
           - mdsvex
           - melt-ui
-          - melt-ui-preprocessor
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
@@ -136,7 +135,6 @@ jobs:
           - language-tools
           - mdsvex
           - melt-ui
-          - melt-ui-preprocessor
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton

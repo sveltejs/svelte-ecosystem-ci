@@ -8,6 +8,6 @@ export async function test(options: RunOptions) {
 		branch: 'main',
 		build: 'pnpm build',
 		beforeTest: 'pnpm playwright install chromium',
-		test: 'pnpm test',
+		test: 'pnpm test:ecosystem-ci',
 	})
 }

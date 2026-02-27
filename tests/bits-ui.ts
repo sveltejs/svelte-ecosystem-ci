@@ -6,6 +6,7 @@ export async function test(options: RunOptions) {
 		...options,
 		repo: 'huntabyte/bits-ui',
 		branch: 'main',
+		build: 'pnpm build',
 		beforeTest: 'pnpm exec playwright install chromium',
 		test: 'pnpm -F tests test:browser --browser chromium',
 		overrides: {

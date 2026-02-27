@@ -40,14 +40,17 @@ on:
         required: true
         type: choice
         options:
+          - bits-ui
           - eslint-plugin-svelte
           - language-tools
+          - layerchart
           - mdsvex
           - melt-ui
           - prettier-plugin-svelte
           - rollup-plugin-svelte
           - skeleton
           - storybook
+          - shadcn-svelte
           - sv
           - svelte-eslint-parser
           - svelte-loader

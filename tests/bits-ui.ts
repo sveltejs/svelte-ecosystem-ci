@@ -8,10 +8,10 @@ export async function test(options: RunOptions) {
 		branch: 'main',
 		build: 'pnpm build',
 		beforeTest: 'pnpm exec playwright install chromium',
-		test: 'pnpm -F tests test:browser --browser chromium',
+		test: 'pnpm test:browser:chromium',
 		overrides: {
-			'@sveltejs/vite-plugin-svelte': true,
-			'@sveltejs/vite-plugin-svelte-inspector': true,
+			'@sveltejs/vite-plugin-svelte': false, // bits-ui uses older Vite version which our newest v-p-s isn't compabitle with
+			'@sveltejs/vite-plugin-svelte-inspector': false,
 			'@sveltejs/kit': true,
 			'svelte-check': true,
 		},

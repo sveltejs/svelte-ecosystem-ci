@@ -10,8 +10,8 @@ export async function test(options: RunOptions) {
 		beforeTest: 'svelte-ecosystem-ci:before-test',
 		test: 'svelte-ecosystem-ci:test',
 		overrides: {
-			'@sveltejs/vite-plugin-svelte': true,
-			'@sveltejs/vite-plugin-svelte-inspector': true,
+			'@sveltejs/vite-plugin-svelte': false, // storybook uses older Vite version which our newest v-p-s isn't compabitle with
+			'@sveltejs/vite-plugin-svelte-inspector': false,
 			'@sveltejs/kit': true,
 		},
 	})

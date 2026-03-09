@@ -75,6 +75,7 @@ export interface RepoOptions {
 	 * - `string`: override dependency source/version (local paths are supported).
 	 * - `true`: force-build and override this package from local builds.
 	 * - `false`: disable a previously set boolean flag.
+	 * - unset: If the dependency is one of the supported "build from source" packages (see builds folder), it will be overridden with that local build
 	 */
 	overrides?: Overrides
 }

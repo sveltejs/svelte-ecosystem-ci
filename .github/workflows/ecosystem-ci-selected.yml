@@ -58,7 +58,7 @@ on:
           - sveltekit
           - vite-plugin-svelte
       suiteBranch:
-        description: "suite repo branch to test (empty = main)"
+        description: "suite repo branch to test (empty = default branch)"
         required: false
         type: string
       sendDiscordReport:

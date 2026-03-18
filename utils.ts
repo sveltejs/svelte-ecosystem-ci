@@ -214,7 +214,9 @@ export async function runInRepo(options: RunOptions & RepoOptions) {
 	if (options.skipGit == null) {
 		options.skipGit = false
 	}
-	if (options.branch == null) {
+	if (process.env.SUITE_BRANCH) {
+		options.branch = process.env.SUITE_BRANCH
+	} else if (options.branch == null) {
 		options.branch = 'main'
 	}
 

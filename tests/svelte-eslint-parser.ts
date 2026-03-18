@@ -5,7 +5,6 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/svelte-eslint-parser',
-		branch: process.env.SUITE_BRANCH || 'main',
 		build: 'build',
 		test: 'test',
 	})

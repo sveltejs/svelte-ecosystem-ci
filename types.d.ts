@@ -62,7 +62,7 @@ export interface RepoOptions {
 	repo: string
 	/** Target directory name for checkout. */
 	dir?: string
-	/** Git branch to checkout. */
+	/** Git branch to checkout. Defaults to `main`. Can be overridden via `SUITE_BRANCH` env var. */
 	branch?: string
 	/** Git tag to checkout. */
 	tag?: string

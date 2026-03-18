@@ -5,7 +5,6 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'huntabyte/bits-ui',
-		branch: process.env.SUITE_BRANCH || 'main',
 		build: 'pnpm build',
 		beforeTest: 'pnpm exec playwright install chromium',
 		test: 'pnpm test:browser:chromium',

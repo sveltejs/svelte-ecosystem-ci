@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'carbon-design-system/carbon-components-svelte',
-		branch: process.env.SUITE_BRANCH || 'master',
+		branch: 'master',
 		build: 'build:lib',
 		test: 'test:types',
 		overrides: {

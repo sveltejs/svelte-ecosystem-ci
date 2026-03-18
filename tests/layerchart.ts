@@ -5,7 +5,6 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'techniq/layerchart',
-		branch: process.env.SUITE_BRANCH || 'main',
 		build: 'pnpm build',
 		test: 'pnpm --dir packages/layerchart test:unit',
 		overrides: {

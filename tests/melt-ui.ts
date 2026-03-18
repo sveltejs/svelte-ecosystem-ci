@@ -5,7 +5,6 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'melt-ui/next-gen',
-		branch: process.env.SUITE_BRANCH || 'main',
 		beforeTest: 'pnpm exec playwright install',
 		test: 'pnpm test',
 	})

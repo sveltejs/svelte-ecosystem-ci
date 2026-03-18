@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/prettier-plugin-svelte',
-		branch: process.env.SUITE_BRANCH || 'master',
+		branch: 'master',
 		build: 'build',
 		test: 'test',
 	})

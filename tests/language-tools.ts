@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/language-tools',
-		branch: 'master',
+		branch: process.env.SUITE_BRANCH || 'master',
 		beforeBuild: 'bootstrap',
 		build: 'build',
 		test: 'test',

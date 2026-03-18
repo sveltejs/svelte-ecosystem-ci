@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/vite-plugin-svelte',
-		branch: 'main',
+		branch: process.env.SUITE_BRANCH || 'main',
 		beforeTest: 'pnpm playwright install chromium',
 		test: ['check:lint', 'check:types', 'test'],
 		overrides: {

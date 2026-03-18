@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'pngwn/MDsveX',
-		branch: 'main',
+		branch: process.env.SUITE_BRANCH || 'main',
 		build: 'pnpm -r build',
 		test: 'pnpm test',
 	})

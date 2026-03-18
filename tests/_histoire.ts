@@ -18,7 +18,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'histoire-dev/histoire',
-		branch: 'main',
+		branch: process.env.SUITE_BRANCH || 'main',
 		build: 'build',
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': true,

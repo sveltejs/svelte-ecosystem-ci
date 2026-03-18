@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/svelte-loader',
-		branch: 'master',
+		branch: process.env.SUITE_BRANCH || 'master',
 		test: 'test',
 	})
 }

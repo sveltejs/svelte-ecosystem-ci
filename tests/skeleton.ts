@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'skeletonlabs/skeleton',
-		branch: 'main',
+		branch: process.env.SUITE_BRANCH || 'main',
 		build: 'pnpm --dir packages/skeleton-svelte build',
 		beforeTest: 'pnpm exec playwright install chromium',
 		test: ['exec vitest run', 'check'].map(

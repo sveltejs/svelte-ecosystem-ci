@@ -57,6 +57,10 @@ on:
           - svelte-preprocess
           - sveltekit
           - vite-plugin-svelte
+      suiteBranch:
+        description: "suite repo branch to test (empty = main)"
+        required: false
+        type: string
       sendDiscordReport:
         description: "send results to discord"
         type: boolean
@@ -86,6 +90,7 @@ jobs:
           REF: ${{ inputs.ref }}
           REPO: ${{ inputs.repo }}
           SUITE: ${{ inputs.suite }}
+          SUITE_BRANCH: ${{ inputs.suiteBranch }}
       - if: always() && (inputs.sendDiscordReport || github.event_name != 'workflow_dispatch')
         run: pnpm tsx discord-webhook.ts
         env:

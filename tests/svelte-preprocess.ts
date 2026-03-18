@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/svelte-preprocess',
-		branch: 'main',
+		branch: process.env.SUITE_BRANCH || 'main',
 		build: 'build',
 		test: 'test',
 	})

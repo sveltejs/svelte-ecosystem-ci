@@ -5,7 +5,6 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'huntabyte/shadcn-svelte',
-		branch: 'main',
 		build: ['pnpm build:cli', 'pnpm build:docs'],
 		test: 'pnpm --filter shadcn-svelte test',
 		overrides: {

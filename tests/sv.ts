@@ -5,7 +5,6 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/cli',
-		branch: 'main',
 		build: 'pnpm build',
 		beforeTest: 'pnpm playwright install chromium',
 		test: 'pnpm test:ecosystem-ci',

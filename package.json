@@ -60,19 +60,5 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.31.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "cross-spawn@>=7.0.0 <7.0.5": "^7.0.6"
-    },
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "simple-git-hooks"
-    ],
-    "auditConfig": {
-      "ignoreGhsas": [
-        "GHSA-67mh-4wv8-2f99"
-      ]
-    }
   }
 }

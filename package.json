@@ -43,7 +43,7 @@
   "dependencies": {
     "@actions/core": "^1.11.1",
     "cac": "^6.7.14",
-    "execa": "^9.5.2",
+    "tinyexec": "^1.2.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {

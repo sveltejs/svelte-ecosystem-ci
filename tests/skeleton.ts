@@ -10,5 +10,11 @@ export async function test(options: RunOptions) {
 		test: ['exec vitest run', 'check'].map(
 			(script) => `pnpm --dir packages/skeleton-svelte ${script}`,
 		),
+		overrides: {
+			'@sveltejs/vite-plugin-svelte': true,
+			'@sveltejs/vite-plugin-svelte-inspector': true,
+			'@sveltejs/kit': true,
+			'svelte-check': true,
+		},
 	})
 }

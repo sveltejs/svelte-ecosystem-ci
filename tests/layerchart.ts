@@ -9,8 +9,8 @@ export async function test(options: RunOptions) {
 		test: 'pnpm --dir packages/layerchart test:unit',
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': true,
-			'@sveltejs/vite-plugin-svelte-inspector': true,
 			'@sveltejs/kit': true,
+			'@sveltejs/load-config': true,
 			'svelte-check': true,
 		},
 	})

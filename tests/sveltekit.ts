@@ -7,7 +7,7 @@ export async function test(options: RunOptions) {
 		repo: 'sveltejs/kit',
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': true,
-			'@sveltejs/vite-plugin-svelte-inspector': true,
+			'@sveltejs/load-config': true,
 			'svelte-check': true,
 		},
 		beforeTest: 'pnpm playwright install',

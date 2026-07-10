@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'techniq/layerchart',
-		build: 'pnpm build',
+		build: 'pnpm build:examples',
 		test: 'pnpm --dir packages/layerchart test:unit',
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': true,

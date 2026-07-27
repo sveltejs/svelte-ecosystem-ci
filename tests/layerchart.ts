@@ -5,11 +5,11 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'techniq/layerchart',
-		beforeTest: 'pnpm --dir packages/layerchart playwright install',
-		build: 'pnpm --dir packages/layerchart build',
+		beforeTest: 'pnpm --dir=packages/layerchart playwright install',
+		build: 'pnpm --dir=packages/layerchart build',
 		test: [
-			'pnpm --dir packages/layerchart test:unit',
-			'pnpm --dir packages/layerchart test:ui',
+			'pnpm --dir=packages/layerchart test:unit',
+			'pnpm --dir=packages/layerchart test:ui',
 		],
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': true,

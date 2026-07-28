@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath, pathToFileURL } from 'url'
-import { execaCommand } from 'execa'
+import { x } from 'tinyexec'
 import type {
 	EnvironmentData,
 	Overrides,
@@ -37,18 +37,24 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		console.log(`${cwd} $> ${cmd}`)
 	}
 
-	const proc = execaCommand(cmd, {
-		env,
-		stdio: 'pipe',
-		cwd,
+	const [command, ...args] = cmd.split(' ')
+
+	const commandResult = x(command, args, {
+		nodeOptions: {
+			env,
+			stdio: 'pipe',
+			cwd,
+		},
+		throwOnError: true,
 	})
-	if (proc.stdin) process.stdin.pipe(proc.stdin)
-	if (proc.stdout) proc.stdout.pipe(process.stdout)
-	if (proc.stderr) proc.stderr.pipe(process.stderr)
+	const proc = commandResult.process
+	if (proc?.stdin) process.stdin.pipe(proc.stdin)
+	if (proc?.stdout) proc.stdout.pipe(process.stdout)
+	if (proc?.stderr) proc.stderr.pipe(process.stderr)
 
 	let result
 	try {
-		result = await proc
+		result = await commandResult
 	} catch (error) {
 		// Since we already piped the io to the parent process, we remove the duplicated
 		// messages here so it's easier to read the error message.

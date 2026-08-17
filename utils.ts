@@ -617,7 +617,7 @@ export async function applyPackageOverrides(
 			fs.writeFileSync(
 				workspaceFile,
 				workspaceConfig.replace(
-					/^overrides:[ \t]*\{\}[ \t]*$/m,
+					/^overrides:[ \t]*(?:\{\})?[ \t]*$/m,
 					`overrides:\n${workspaceOverrides}`,
 				),
 				'utf-8',

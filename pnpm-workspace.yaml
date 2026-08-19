@@ -1,0 +1,6 @@
+allowBuilds:
+  esbuild: true
+  simple-git-hooks: true
+
+minimumReleaseAgeExclude:
+  - js-yaml@4.1.2

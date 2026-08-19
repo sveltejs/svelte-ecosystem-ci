@@ -1,0 +1,8 @@
+auditConfig:
+  ignoreGhsas:
+    - GHSA-67mh-4wv8-2f99
+onlyBuiltDependencies:
+  - esbuild
+  - simple-git-hooks
+overrides:
+  cross-spawn@>=7.0.0 <7.0.5: ^7.0.6

@@ -13,6 +13,7 @@ import type {
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
 import * as actionsCore from '@actions/core'
 import * as semver from 'semver'
+import * as yaml from 'yaml'
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS
 
@@ -607,21 +608,14 @@ export async function applyPackageOverrides(
 		}
 		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
 		if (fs.existsSync(workspaceFile)) {
-			const workspaceConfig = fs.readFileSync(workspaceFile, 'utf-8')
-			const workspaceOverrides = Object.entries(overrides)
-				.map(
-					([name, version]) =>
-						`  ${JSON.stringify(name)}: ${JSON.stringify(version)}`,
-				)
-				.join('\n')
-			fs.writeFileSync(
-				workspaceFile,
-				workspaceConfig.replace(
-					/^overrides:[ \t]*(?:\{\})?[ \t]*$/m,
-					`overrides:\n${workspaceOverrides}`,
-				),
-				'utf-8',
+			const workspaceConfig = yaml.parse(
+				fs.readFileSync(workspaceFile, 'utf-8'),
 			)
+			workspaceConfig.overrides = {
+				...workspaceConfig.overrides,
+				...overrides,
+			}
+			fs.writeFileSync(workspaceFile, yaml.stringify(workspaceConfig), 'utf-8')
 		} else {
 			if (!pkg.pnpm) {
 				pkg.pnpm = {}

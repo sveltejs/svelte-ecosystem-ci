@@ -13,6 +13,7 @@ import type {
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
 import * as actionsCore from '@actions/core'
 import * as semver from 'semver'
+import * as yaml from 'yaml'
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS
 
@@ -605,12 +606,24 @@ export async function applyPackageOverrides(
 			...pkg.devDependencies,
 			...overridesWithoutSpecialSyntax, // overrides must be present in devDependencies or dependencies otherwise they may not work
 		}
-		if (!pkg.pnpm) {
-			pkg.pnpm = {}
-		}
-		pkg.pnpm.overrides = {
-			...pkg.pnpm.overrides,
-			...overrides,
+		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
+		if (fs.existsSync(workspaceFile)) {
+			const workspaceConfig = yaml.parse(
+				fs.readFileSync(workspaceFile, 'utf-8'),
+			)
+			workspaceConfig.overrides = {
+				...workspaceConfig.overrides,
+				...overrides,
+			}
+			fs.writeFileSync(workspaceFile, yaml.stringify(workspaceConfig), 'utf-8')
+		} else {
+			if (!pkg.pnpm) {
+				pkg.pnpm = {}
+			}
+			pkg.pnpm.overrides = {
+				...pkg.pnpm.overrides,
+				...overrides,
+			}
 		}
 	} else if (pm === 'yarn') {
 		pkg.resolutions = {

@@ -667,7 +667,7 @@ export async function applyPackageOverrides(
 			}
 		}
 		const [major] = (await $`pnpm --version`).split('.')
-		await $`pnpm install ${+major >= 12 ? '' : '--prefer-frozen-lockfile '}--strict-peer-dependencies false`
+		await $`pnpm install ${+major >= 12 ? '' : '--prefer-frozen-lockfile --strict-peer-dependencies false'}`
 	} else if (pm === 'yarn') {
 		await $`yarn install`
 	} else if (pm === 'npm') {

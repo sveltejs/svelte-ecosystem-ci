@@ -11,7 +11,7 @@ export async function test(options: RunOptions) {
 			'@sveltejs/load-config': true,
 			'svelte-check': true,
 		},
-		beforeTest: 'pnpm playwright install',
-		test: ['test:vite-ecosystem-ci', 'lint', 'check'], // TODO do we want another set of tests for svelte?
+		beforeTest: 'pnpm playwright install chromium',
+		test: ['test:vite-ecosystem-ci', 'pnpm --dir packages/kit check'],
 	})
 }

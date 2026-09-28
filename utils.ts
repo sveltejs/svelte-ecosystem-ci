@@ -363,6 +363,47 @@ export async function getPermanentRef() {
 	}
 }
 
+const REGISTRY = 'https://pkg.svelte.dev'
+
+/**
+ * Unpacks the build pkg.svelte.dev serves for a svelte commit over packages/svelte of the
+ * checkout. False when the registry does not serve that commit (a fork) or has not finished
+ * building it in time, so the caller builds locally instead.
+ */
+export async function useRegistryBuild(sha: string | undefined) {
+	if (!sha) return false
+	const url = `${REGISTRY}/svelte/c/${sha}`
+	let tarball: string | undefined
+	for (let attempt = 0; attempt < 4 && !tarball; attempt++) {
+		const res = await fetch(url, { method: 'HEAD', redirect: 'manual' })
+		const location = res.headers.get('location')
+		if (location && res.status >= 300 && res.status < 400) {
+			tarball = location
+		} else if (res.status !== 503) {
+			console.log(`${url} answered ${res.status}, building svelte locally`)
+			return false
+		} else {
+			const wait = Number(res.headers.get('retry-after')) || 15
+			console.log(`${url} is still building, retrying in ${wait}s`)
+			await new Promise((resolve) => setTimeout(resolve, wait * 1000))
+		}
+	}
+	if (!tarball) {
+		console.log(
+			`${url} did not finish building in time, building svelte locally`,
+		)
+		return false
+	}
+	console.log(`\nunpacking ${tarball}`)
+	const file = path.join(sveltePath, 'svelte.tgz')
+	const res = await fetch(tarball)
+	fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()))
+	cd(sveltePath)
+	await $`tar xzf ${file} --strip-components=1 -C packages/svelte`
+	fs.rmSync(file)
+	return true
+}
+
 export async function buildSvelte({ verify = false }) {
 	cd(`${sveltePath}/packages/svelte`)
 	const frozenInstall = getCommand('pnpm', 'frozen')

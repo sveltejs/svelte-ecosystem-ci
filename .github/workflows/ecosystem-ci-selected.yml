@@ -55,7 +55,8 @@ on:
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
       suiteBranch:
         description: "suite repo branch to test (empty = default branch)"

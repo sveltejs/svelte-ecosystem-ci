@@ -12,7 +12,7 @@ export async function test(options: RunOptions) {
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': false, // storybook uses older Vite version which our newest v-p-s isn't compabitle with
 			'@sveltejs/vite-plugin-svelte-inspector': false,
-			'@sveltejs/kit': true,
+			'@sveltejs/kit': false, // storybook is still on kit 2
 		},
 	})
 }

@@ -85,6 +85,7 @@ export async function setupEnvironment(): Promise<EnvironmentData> {
 		ECOSYSTEM_CI: 'true', // flag for tests, can be used to conditionally skip irrelevant tests.
 		TURBO_TELEMETRY_DISABLED: '1', //   # see https://turbo.build/repo/docs/telemetry#how-do-i-opt-out
 		DO_NOT_TRACK: '1',
+		pnpm_config_verify_deps_before_run: 'false', // `pnpm tsx` used to set this, without it pnpm 11+ reinstalls before every `pnpm run`
 	}
 	initWorkspace(workspace)
 	return { root, workspace, sveltePath, cwd, env }

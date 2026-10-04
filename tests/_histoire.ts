@@ -1,5 +1,5 @@
 import { runInRepo } from '../utils.ts'
-import { RunOptions } from '../types.ts'
+import type { RunOptions } from '../types.d.ts'
 
 // TODO currently the tests around svelte are very few in histoire
 const scripts_to_test = {

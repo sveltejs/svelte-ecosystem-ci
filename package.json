@@ -10,9 +10,9 @@
     "typecheck": "tsc",
     "format": "prettier --ignore-path .gitignore --check .",
     "format:fix": "pnpm format --write",
-    "test:self": "tsx ecosystem-ci.ts _selftest",
-    "test": "tsx ecosystem-ci.ts",
-    "bisect": "tsx ecosystem-ci.ts bisect"
+    "test:self": "node ecosystem-ci.ts _selftest",
+    "test": "node ecosystem-ci.ts",
+    "bisect": "node ecosystem-ci.ts bisect"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm exec lint-staged --concurrent false"
@@ -28,7 +28,7 @@
   "packageManager": "pnpm@11.22.0+sha512.1ff870c4c6133dfd88fb2afc46dd13d47f09c9794b438c6fdb47ca98caf3bc16381ee0be93a091b8e3824cf01f889f46d7d9e20910fb0be1ab0fb5baa80dd621",
   "type": "module",
   "engines": {
-    "node": ">=22",
+    "node": ">=24.12",
     "pnpm": "^10.6.3 || ^11.0.0"
   },
   "repository": {
@@ -54,7 +54,6 @@
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
     "simple-git-hooks": "^2.12.1",
-    "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.35.1"
   }

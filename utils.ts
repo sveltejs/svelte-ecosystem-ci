@@ -11,7 +11,6 @@ import type {
 	Task,
 } from './types.d.ts'
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
-import * as semver from 'semver'
 import * as yaml from 'yaml'
 import { stringify_package_json } from './package-json.ts'
 

@@ -104,7 +104,7 @@ jobs:
         with:
           require-lockfile: true
       - run: >-
-          pnpm tsx ecosystem-ci.ts
+          node ecosystem-ci.ts
           --branch "$BRANCH_NAME"
           --repo "$REPO"
           $(if [ -n "$COMMIT" ] ; then echo "--commit $COMMIT"; fi)
@@ -163,7 +163,7 @@ jobs:
         with:
           require-lockfile: true
       - run: >-
-          pnpm tsx ecosystem-ci.ts
+          node ecosystem-ci.ts
           --branch "$BRANCH_NAME"
           --repo "$REPO"
           $(if [ -n "$COMMIT" ] ; then echo "--commit $COMMIT"; fi)

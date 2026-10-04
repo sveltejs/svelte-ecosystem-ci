@@ -81,7 +81,7 @@ jobs:
         with:
           require-lockfile: true
       - run: >-
-          pnpm tsx ecosystem-ci.ts
+          node ecosystem-ci.ts
           "--$REF_TYPE" "$REF"
           --repo "$REPO"
           "$SUITE"
@@ -93,7 +93,7 @@ jobs:
           SUITE: ${{ inputs.suite }}
           SUITE_BRANCH: ${{ inputs.suiteBranch }}
       - if: always() && (inputs.sendDiscordReport || github.event_name != 'workflow_dispatch')
-        run: pnpm tsx discord-webhook.ts
+        run: node discord-webhook.ts
         env:
           WORKFLOW_NAME: ci-selected
           REF_TYPE: ${{ inputs.refType }}

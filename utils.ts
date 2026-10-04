@@ -13,6 +13,8 @@ import type {
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
 import * as actionsCore from '@actions/core'
 import * as semver from 'semver'
+import * as yaml from 'yaml'
+import { stringify_package_json } from './package-json.ts'
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS
 
@@ -362,6 +364,47 @@ export async function getPermanentRef() {
 	}
 }
 
+const REGISTRY = 'https://pkg.svelte.dev'
+
+/**
+ * Unpacks the build pkg.svelte.dev serves for a svelte commit over packages/svelte of the
+ * checkout. False when the registry does not serve that commit (a fork) or has not finished
+ * building it in time, so the caller builds locally instead.
+ */
+export async function useRegistryBuild(sha: string | undefined) {
+	if (!sha) return false
+	const url = `${REGISTRY}/svelte/c/${sha}`
+	let tarball: string | undefined
+	for (let attempt = 0; attempt < 4 && !tarball; attempt++) {
+		const res = await fetch(url, { method: 'HEAD', redirect: 'manual' })
+		const location = res.headers.get('location')
+		if (location && res.status >= 300 && res.status < 400) {
+			tarball = location
+		} else if (res.status !== 503) {
+			console.log(`${url} answered ${res.status}, building svelte locally`)
+			return false
+		} else {
+			const wait = Number(res.headers.get('retry-after')) || 15
+			console.log(`${url} is still building, retrying in ${wait}s`)
+			await new Promise((resolve) => setTimeout(resolve, wait * 1000))
+		}
+	}
+	if (!tarball) {
+		console.log(
+			`${url} did not finish building in time, building svelte locally`,
+		)
+		return false
+	}
+	console.log(`\nunpacking ${tarball}`)
+	const file = path.join(sveltePath, 'svelte.tgz')
+	const res = await fetch(tarball)
+	fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()))
+	cd(sveltePath)
+	await $`tar xzf ${file} --strip-components=1 -C packages/svelte`
+	fs.rmSync(file)
+	return true
+}
+
 export async function buildSvelte({ verify = false }) {
 	cd(`${sveltePath}/packages/svelte`)
 	const frozenInstall = getCommand('pnpm', 'frozen')
@@ -494,7 +537,8 @@ async function patchLinkedPackageWorkspaceDeps(
 		if (!isLocalOverride(localPath)) continue
 		const pkgFile = path.join(localPath, 'package.json')
 		if (!fs.existsSync(pkgFile)) continue
-		const pkg = JSON.parse(await fs.promises.readFile(pkgFile, 'utf-8'))
+		const original = await fs.promises.readFile(pkgFile, 'utf-8')
+		const pkg = JSON.parse(original)
 		let modified = false
 		for (const field of PACKAGE_DEP_FIELDS) {
 			const deps = pkg[field]
@@ -514,7 +558,7 @@ async function patchLinkedPackageWorkspaceDeps(
 		if (modified) {
 			await fs.promises.writeFile(
 				pkgFile,
-				JSON.stringify(pkg, null, 2),
+				stringify_package_json(pkg, original),
 				'utf-8',
 			)
 		}
@@ -605,12 +649,24 @@ export async function applyPackageOverrides(
 			...pkg.devDependencies,
 			...overridesWithoutSpecialSyntax, // overrides must be present in devDependencies or dependencies otherwise they may not work
 		}
-		if (!pkg.pnpm) {
-			pkg.pnpm = {}
-		}
-		pkg.pnpm.overrides = {
-			...pkg.pnpm.overrides,
-			...overrides,
+		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
+		if (fs.existsSync(workspaceFile)) {
+			const workspaceConfig = yaml.parse(
+				fs.readFileSync(workspaceFile, 'utf-8'),
+			)
+			workspaceConfig.overrides = {
+				...workspaceConfig.overrides,
+				...overrides,
+			}
+			fs.writeFileSync(workspaceFile, yaml.stringify(workspaceConfig), 'utf-8')
+		} else {
+			if (!pkg.pnpm) {
+				pkg.pnpm = {}
+			}
+			pkg.pnpm.overrides = {
+				...pkg.pnpm.overrides,
+				...overrides,
+			}
 		}
 	} else if (pm === 'yarn') {
 		pkg.resolutions = {
@@ -635,7 +691,12 @@ export async function applyPackageOverrides(
 		throw new Error(`unsupported package manager detected: ${pm}`)
 	}
 	const pkgFile = path.join(dir, 'package.json')
-	await fs.promises.writeFile(pkgFile, JSON.stringify(pkg, null, 2), 'utf-8')
+	const original = await fs.promises.readFile(pkgFile, 'utf-8')
+	await fs.promises.writeFile(
+		pkgFile,
+		stringify_package_json(pkg, original),
+		'utf-8',
+	)
 
 	// use of `ni` command here could cause lockfile violation errors so fall back to native commands that avoid these
 	if (pm === 'pnpm') {

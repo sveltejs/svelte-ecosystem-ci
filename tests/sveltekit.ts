@@ -5,12 +5,13 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/kit',
+		branch: 'version-3',
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': true,
 			'@sveltejs/load-config': true,
 			'svelte-check': true,
 		},
-		beforeTest: 'pnpm playwright install',
-		test: ['test:vite-ecosystem-ci', 'lint', 'check'], // TODO do we want another set of tests for svelte?
+		beforeTest: 'pnpm playwright install chromium',
+		test: ['test:vite-ecosystem-ci', 'lint', 'pnpm --dir packages/kit check'],
 	})
 }

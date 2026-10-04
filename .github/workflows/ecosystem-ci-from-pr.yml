@@ -53,7 +53,8 @@ on:
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
 jobs:
   init:
@@ -149,7 +150,8 @@ jobs:
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
       fail-fast: false
     steps:

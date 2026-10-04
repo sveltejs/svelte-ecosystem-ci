@@ -12,7 +12,6 @@ import type {
 } from './types.d.ts'
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
 import * as actionsCore from '@actions/core'
-import * as semver from 'semver'
 import * as yaml from 'yaml'
 import { stringify_package_json } from './package-json.ts'
 
@@ -334,20 +333,6 @@ export async function setupSvelteRepo(options: Partial<RepoOptions>) {
 				`expected  "name" field of ${repo}/package.json to be "${expected}", but got "${name}".`,
 			)
 		}
-		const needsWrite = await overridePackageManagerVersion(
-			rootPackageJson,
-			'pnpm',
-		)
-		if (needsWrite) {
-			fs.writeFileSync(
-				rootPackageJsonFile,
-				JSON.stringify(rootPackageJson, null, 2),
-				'utf-8',
-			)
-			if (rootPackageJson.devDependencies?.pnpm) {
-				await $`pnpm install -Dw pnpm --lockfile-only`
-			}
-		}
 	} catch (e) {
 		throw new Error(`Failed to setup svelte repo`, { cause: e })
 	}
@@ -565,49 +550,6 @@ async function patchLinkedPackageWorkspaceDeps(
 	}
 }
 
-/**
- * utility to override packageManager version
- *
- * @param pkg parsed package.json
- * @param pm package manager to override eg. `pnpm`
- * @returns {boolean} true if pkg was updated, caller is responsible for writing it to disk
- */
-async function overridePackageManagerVersion(
-	pkg: { [key: string]: any },
-	pm: string,
-): Promise<boolean> {
-	const versionInUse = pkg.packageManager?.startsWith(`${pm}@`)
-		? pkg.packageManager.substring(pm.length + 1)
-		: await $`${pm} --version`
-	let overrideWithVersion: string | null = null
-	if (pm === 'pnpm') {
-		if (semver.eq(versionInUse, '7.18.0')) {
-			// avoid bug with absolute overrides in pnpm 7.18.0
-			overrideWithVersion = '7.18.1'
-		}
-	}
-	if (overrideWithVersion) {
-		console.warn(
-			`detected ${pm}@${versionInUse} used in ${pkg.name}, changing pkg.packageManager and pkg.engines.${pm} to enforce use of ${pm}@${overrideWithVersion}`,
-		)
-		// corepack reads this and uses pnpm @ newVersion then
-		pkg.packageManager = `${pm}@${overrideWithVersion}`
-		if (!pkg.engines) {
-			pkg.engines = {}
-		}
-		pkg.engines[pm] = overrideWithVersion
-
-		if (pkg.devDependencies?.[pm]) {
-			// if for some reason the pm is in devDependencies, that would be a local version that'd be preferred over our forced global
-			// so ensure it here too.
-			pkg.devDependencies[pm] = overrideWithVersion
-		}
-
-		return true
-	}
-	return false
-}
-
 export async function applyPackageOverrides(
 	dir: string,
 	pkg: any,
@@ -632,8 +574,6 @@ export async function applyPackageOverrides(
 	// yarn@berry => yarn
 	// pnpm@6, pnpm@7 => pnpm
 	const pm = agent?.split('@')[0]
-
-	await overridePackageManagerVersion(pkg, pm)
 
 	if (pm === 'pnpm') {
 		const overridesWithoutSpecialSyntax = Object.fromEntries(

@@ -11,7 +11,7 @@ import type {
 	Task,
 } from './types.d.ts'
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
-import * as actionsCore from '@actions/core'
+import * as semver from 'semver'
 import * as yaml from 'yaml'
 import { stringify_package_json } from './package-json.ts'
 
@@ -32,10 +32,16 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		'',
 	)
 
+	const line = `${cwd} $> ${cmd}`
 	if (isGitHubActions) {
-		actionsCore.startGroup(`${cwd} $> ${cmd}`)
+		// https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines
+		const escaped = line
+			.replace(/%/g, '%25')
+			.replace(/\r/g, '%0D')
+			.replace(/\n/g, '%0A')
+		console.log(`::group::${escaped}`)
 	} else {
-		console.log(`${cwd} $> ${cmd}`)
+		console.log(line)
 	}
 
 	const proc = execaCommand(cmd, {
@@ -60,7 +66,7 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 	}
 
 	if (isGitHubActions) {
-		actionsCore.endGroup()
+		console.log('::endgroup::')
 	}
 
 	return result.stdout

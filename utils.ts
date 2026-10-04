@@ -73,7 +73,8 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 
 export async function setupEnvironment(): Promise<EnvironmentData> {
 	const root = dirnameFrom(import.meta.url)
-	const workspace = path.resolve(root, 'workspace')
+	// outside the repo on CI so the suites cannot resolve our own node_modules
+	const workspace = path.resolve(process.env.RUNNER_TEMP ?? root, 'workspace')
 	sveltePath = path.resolve(workspace, 'svelte')
 	cwd = process.cwd()
 	env = {

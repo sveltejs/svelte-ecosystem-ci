@@ -79,7 +79,7 @@ jobs:
       - run: pnpm --version
       - run: pnpm i --frozen-lockfile
       - run: >-
-          pnpm tsx ecosystem-ci.ts
+          node ecosystem-ci.ts
           "--$REF_TYPE" "$REF"
           --repo "$REPO"
           "$SUITE"
@@ -90,7 +90,7 @@ jobs:
           REPO: ${{ inputs.repo || github.event.client_payload.repo || 'sveltejs/svelte' }}
           SUITE: ${{ matrix.suite }}
       - if: always() && (inputs.sendDiscordReport || github.event_name != 'workflow_dispatch')
-        run: pnpm tsx discord-webhook.ts
+        run: node discord-webhook.ts
         env:
           WORKFLOW_NAME: ci
           REF_TYPE: ${{ inputs.refType || github.event.client_payload.refType || 'branch' }}

@@ -127,7 +127,7 @@ export async function setupRepo(options: RepoOptions) {
 
 	let needClone = true
 	if (fs.existsSync(dir)) {
-		const _cwd = cwd
+		const previousCwd = cwd
 		cd(dir)
 		let currentClonedRepo: string | undefined
 		try {
@@ -142,7 +142,7 @@ export async function setupRepo(options: RepoOptions) {
 				needClone = false
 			}
 		}
-		cd(_cwd)
+		cd(previousCwd)
 
 		if (needClone) {
 			fs.rmSync(dir, { recursive: true, force: true })
@@ -160,11 +160,11 @@ export async function setupRepo(options: RepoOptions) {
 		await $`git remote set-branches origin ${branch}`
 	}
 	await $`git fetch ${shallow ? '--depth=1 --no-tags' : '--tags'} origin ${
-		tag ? `tag ${tag}` : `${commit || branch}`
+		tag ? `tag ${tag}` : commit || branch
 	}`
 	if (shallow) {
 		await $`git -c advice.detachedHead=false checkout ${
-			tag ? `tags/${tag}` : `${commit || branch}`
+			tag ? `tags/${tag}` : commit || branch
 		}`
 	} else {
 		await $`git checkout ${branch}`
@@ -207,7 +207,7 @@ function toCommand(
 				}
 			} else {
 				throw new Error(
-					`invalid task, expected string or function but got ${typeof task}: ${task}`,
+					`invalid task, expected string or function but got ${typeof task}`,
 				)
 			}
 		}

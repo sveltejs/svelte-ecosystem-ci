@@ -6,4 +6,3 @@ minimumReleaseAgeExclude:
 
 engineStrict: true
 strictPeerDependencies: false
-pmOnFail: warn

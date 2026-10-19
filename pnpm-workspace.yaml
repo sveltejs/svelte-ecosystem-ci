@@ -3,3 +3,7 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - js-yaml@4.1.2
+
+engineStrict: true
+strictPeerDependencies: false
+pmOnFail: warn

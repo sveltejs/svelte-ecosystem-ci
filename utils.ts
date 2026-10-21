@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath, pathToFileURL } from 'url'
-import { execaCommand } from 'execa'
+import { spawn } from 'child_process'
 import type {
 	EnvironmentData,
 	Overrides,
@@ -43,32 +43,30 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		console.log(line)
 	}
 
-	const proc = execaCommand(cmd, {
+	const [command, ...args] = cmd.trim().split(/ +/)
+	const proc = spawn(command, args, {
 		env,
-		stdio: 'pipe',
 		cwd,
+		stdio: ['inherit', 'pipe', 'inherit'],
 	})
-	if (proc.stdin) process.stdin.pipe(proc.stdin)
-	if (proc.stdout) proc.stdout.pipe(process.stdout)
-	if (proc.stderr) proc.stderr.pipe(process.stderr)
-
-	let result
-	try {
-		result = await proc
-	} catch (error) {
-		// Since we already piped the io to the parent process, we remove the duplicated
-		// messages here so it's easier to read the error message.
-		if (error.stdout) error.stdout = 'value removed by svelte-ecosystem-ci'
-		if (error.stderr) error.stderr = 'value removed by svelte-ecosystem-ci'
-		if (error.stdio) error.stdio = ['value removed by svelte-ecosystem-ci']
-		throw error
+	let stdout = ''
+	proc.stdout.on('data', (chunk) => {
+		stdout += chunk
+		process.stdout.write(chunk)
+	})
+	const code = await new Promise((resolve, reject) => {
+		proc.on('error', reject)
+		proc.on('close', resolve)
+	})
+	if (code !== 0) {
+		throw new Error(`Command failed with exit code ${code}: ${cmd}`)
 	}
 
 	if (isGitHubActions) {
 		console.log('::endgroup::')
 	}
 
-	return result.stdout
+	return stdout.replace(/\r?\n$/, '')
 }
 
 export async function setupEnvironment(): Promise<EnvironmentData> {

@@ -10,7 +10,7 @@ export async function test(options: RunOptions) {
 		overrides: {
 			'@sveltejs/load-config': true,
 			'svelte-check': true,
-			'@sveltejs/kit': true,
+			'@sveltejs/kit': false, // vite-plugin-svelte is still on kit 2
 		},
 	})
 }

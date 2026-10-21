@@ -11,7 +11,7 @@ export async function test(options: RunOptions) {
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': false, // bits-ui uses older Vite version which our newest v-p-s isn't compabitle with
 			'@sveltejs/vite-plugin-svelte-inspector': false,
-			'@sveltejs/kit': true,
+			'@sveltejs/kit': false, // bits-ui is still on kit 2
 			'@sveltejs/load-config': true,
 			'svelte-check': true,
 		},

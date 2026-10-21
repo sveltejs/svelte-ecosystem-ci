@@ -10,7 +10,7 @@ export async function test(options: RunOptions) {
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': false, // shadcn-svelte uses older Vite version which our newest v-p-s isn't compabitle with
 			'@sveltejs/vite-plugin-svelte-inspector': false,
-			'@sveltejs/kit': true,
+			'@sveltejs/kit': false, // shadcn-svelte is still on kit 2
 		},
 	})
 }

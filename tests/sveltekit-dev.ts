@@ -1,7 +1,15 @@
 import { runInRepo } from '../utils.ts'
 import type { RunOptions } from '../types.d.ts'
 
-export async function test(options: RunOptions) {
+export async function test(
+	options: RunOptions,
+	tasks = [
+		'test:kit:unit',
+		'test:kit:dev',
+		'lint',
+		'pnpm --dir packages/kit check',
+	],
+) {
 	await runInRepo({
 		...options,
 		repo: 'sveltejs/kit',
@@ -12,6 +20,6 @@ export async function test(options: RunOptions) {
 			'svelte-check': true,
 		},
 		beforeTest: 'pnpm playwright install chromium',
-		test: ['test:vite-ecosystem-ci', 'lint', 'pnpm --dir packages/kit check'],
+		test: tasks,
 	})
 }

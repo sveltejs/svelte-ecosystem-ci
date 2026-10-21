@@ -121,7 +121,7 @@ jobs:
           echo "ref=$REF" >> $GITHUB_OUTPUT
         env:
           COMMIT: ${{ inputs.commit }}
-        working-directory: ${{ inputs.commit && '.' || 'workspace/svelte' }}
+        working-directory: ${{ inputs.commit && '.' || format('{0}/workspace/svelte', runner.temp) }}
 
   execute-all:
     timeout-minutes: 30
@@ -180,7 +180,7 @@ jobs:
           echo "ref=$REF" >> $GITHUB_OUTPUT
         env:
           COMMIT: ${{ inputs.commit }}
-        working-directory: ${{ inputs.commit && '.' || 'workspace/svelte' }}
+        working-directory: ${{ inputs.commit && '.' || format('{0}/workspace/svelte', runner.temp) }}
 
   update-comment:
     runs-on: ubuntu-latest

@@ -57,7 +57,8 @@ on:
           - vite-plugin-svelte
 jobs:
   init:
-    runs-on: ubuntu-latest
+    # pinned: Playwright (used by many suites) does not support ubuntu-26.04, which ubuntu-latest now points to
+    runs-on: ubuntu-24.04
     outputs:
       comment-id: ${{ steps.create-comment.outputs.result }}
     permissions: {}
@@ -87,7 +88,7 @@ jobs:
 
   execute-selected-suite:
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: init
     if: "inputs.suite != '-'"
     outputs:
@@ -125,7 +126,7 @@ jobs:
 
   execute-all:
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: init
     if: "inputs.suite == '-'"
     outputs:
@@ -183,7 +184,7 @@ jobs:
         working-directory: ${{ inputs.commit && '.' || format('{0}/workspace/svelte', runner.temp) }}
 
   update-comment:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [init, execute-selected-suite, execute-all]
     if: always()
     permissions: {}

@@ -65,6 +65,7 @@ jobs:
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
+          - sveltia-cms
           - sveltekit
           - vite-plugin-svelte
       fail-fast: false

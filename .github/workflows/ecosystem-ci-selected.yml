@@ -55,6 +55,7 @@ on:
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
+          - sveltia-cms
           - sveltekit
           - vite-plugin-svelte
       suiteBranch:

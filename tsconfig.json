@@ -1,6 +1,6 @@
 {
 	"include": ["./**/*.ts"],
-	"exclude": ["**/node_modules/**", "./workspace/**"],
+	"exclude": ["**/node_modules/**"],
 	"compilerOptions": {
 		"target": "esnext",
 		"module": "nodenext",

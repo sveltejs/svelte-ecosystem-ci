@@ -5,7 +5,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
 	{
-		ignores: ['.idea/**', '.vscode/**', 'workspace/**', 'node_modules/**'],
+		ignores: ['.idea/**', '.vscode/**', 'node_modules/**'],
 	},
 	eslint.configs.recommended,
 	...tseslint.configs.recommended,

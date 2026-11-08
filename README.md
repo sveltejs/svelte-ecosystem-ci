@@ -26,7 +26,11 @@ Workflows are scheduled to run automatically every Monday, Wednesday and Friday
 You can pass `--tag v2.8.0-beta.1`, `--branch somebranch` or `--commit abcd1234` option to select a specific svelte version to build.
 If you pass `--release 2.7.13`, svelte build will be skipped and svelte is fetched from the registry instead
 
-The repositories are checked out into `workspace` subdirectory as shallow clones
+The repositories are checked out as shallow clones into a workspace outside this repo, so they cannot pick up its `node_modules` or config files:
+
+- locally: `<os tmpdir>/svelte-ecosystem-ci` (for example `/tmp/svelte-ecosystem-ci` on Linux)
+- on GitHub Actions: `$RUNNER_TEMP/workspace`
+- set `ECOSYSTEM_CI_WORKSPACE=/some/dir` to use another location (it must not be inside this repo)
 
 ## via comment on PR
 

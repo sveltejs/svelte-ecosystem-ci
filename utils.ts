@@ -59,7 +59,7 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		proc.on('close', resolve)
 	})
 	if (code !== 0) {
-		throw new Error(`Command failed with exit code ${String(code)}: ${cmd}`)
+		throw new Error(`Command failed with exit code ${code}: ${cmd}`)
 	}
 
 	if (isGitHubActions) {

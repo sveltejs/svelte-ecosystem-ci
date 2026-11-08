@@ -1,6 +1,5 @@
 import path from 'path'
 import fs from 'fs'
-import os from 'os'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { spawn } from 'child_process'
 import type {
@@ -72,7 +71,9 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 
 export async function setupEnvironment(): Promise<EnvironmentData> {
 	const root = dirnameFrom(import.meta.url)
-	const workspace = resolveWorkspace(root)
+	// on CI the workspace lives in RUNNER_TEMP, outside the repo, so suites
+	// cannot resolve our own node_modules or pick up our config files
+	const workspace = path.resolve(process.env.RUNNER_TEMP ?? root, 'workspace')
 	sveltePath = path.resolve(workspace, 'svelte')
 	cwd = process.cwd()
 	env = {
@@ -90,59 +91,27 @@ export async function setupEnvironment(): Promise<EnvironmentData> {
 	return { root, workspace, sveltePath, cwd, env }
 }
 
-/**
- * The workspace lives outside this repo so that suites cannot resolve our
- * `node_modules` or pick up our config files (`tsconfig.json`, eslint, etc.).
- * Override with `ECOSYSTEM_CI_WORKSPACE`.
- */
-function resolveWorkspace(root: string) {
-	const workspace = process.env.ECOSYSTEM_CI_WORKSPACE
-		? path.resolve(process.env.ECOSYSTEM_CI_WORKSPACE)
-		: process.env.RUNNER_TEMP
-			? path.resolve(process.env.RUNNER_TEMP, 'workspace')
-			: path.join(os.tmpdir(), 'svelte-ecosystem-ci')
-	const relative = path.relative(root, workspace)
-	if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
-		throw new Error(
-			`workspace ${workspace} must not be inside ${root}, suites would pick up its node_modules and config files`,
-		)
-	}
-	return workspace
-}
-
-const leakyFiles = [
-	'package.json',
-	'node_modules',
-	'tsconfig.json',
-	'jsconfig.json',
-	'.editorconfig',
-	'.eslintrc',
-	'.eslintrc.json',
-	'.eslintrc.js',
-	'.eslintrc.cjs',
-	'.eslintrc.yml',
-	'.eslintrc.yaml',
-	'eslint.config.js',
-	'eslint.config.mjs',
-	'eslint.config.cjs',
-	'eslint.config.ts',
-]
-
 function initWorkspace(workspace: string) {
-	fs.mkdirSync(workspace, { recursive: true })
-	// warn about files in parent folders that suites could pick up
-	let dir = path.dirname(workspace)
-	while (true) {
-		for (const file of leakyFiles) {
-			if (fs.existsSync(path.join(dir, file))) {
-				console.warn(
-					`warning: ${path.join(dir, file)} is in a parent folder of the workspace ${workspace} and may leak into suites, set ECOSYSTEM_CI_WORKSPACE to use another location`,
-				)
-			}
-		}
-		const parent = path.dirname(dir)
-		if (parent === dir) break
-		dir = parent
+	if (!fs.existsSync(workspace)) {
+		fs.mkdirSync(workspace, { recursive: true })
+	}
+	if (process.env.RUNNER_TEMP) {
+		// nothing to shield the suites from, and a parent tsconfig.json makes
+		// TypeScript 6 refuse to compile single files (`tsc <file>`, TS5112)
+		return
+	}
+	// locally the workspace is inside this repo, stop suites from using our config
+	const eslintrc = path.join(workspace, '.eslintrc.json')
+	if (!fs.existsSync(eslintrc)) {
+		fs.writeFileSync(eslintrc, '{"root":true}\n', 'utf-8')
+	}
+	const editorconfig = path.join(workspace, '.editorconfig')
+	if (!fs.existsSync(editorconfig)) {
+		fs.writeFileSync(editorconfig, 'root = true\n', 'utf-8')
+	}
+	const tsconfig = path.join(workspace, 'tsconfig.json')
+	if (!fs.existsSync(tsconfig)) {
+		fs.writeFileSync(tsconfig, '{}\n', 'utf-8')
 	}
 }
 

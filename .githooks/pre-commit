@@ -1,0 +1,13 @@
+#!/bin/sh
+# Lint and format the staged files, then re-stage them. A file with unstaged
+# hunks is refused instead of patched around: stage all of it, or commit -n.
+staged() { git diff --cached --name-only --diff-filter=ACMR -z; }
+partial=$(staged | xargs -0 -r git diff --name-only --)
+if [ -n "$partial" ]; then
+	printf 'pre-commit: partially staged files, stage them fully or use -n:\n%s\n' "$partial" >&2
+	exit 1
+fi
+staged | xargs -0 -r node_modules/.bin/oxlint --fix --no-error-on-unmatched-pattern; lint=$?
+staged | xargs -0 -r node_modules/.bin/oxfmt --no-error-on-unmatched-pattern; fmt=$?
+staged | xargs -0 -r git add --
+[ "$lint" -eq 0 ] && [ "$fmt" -eq 0 ]

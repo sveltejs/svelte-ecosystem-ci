@@ -54,7 +54,8 @@ on:
           - svelte-loader
           - svelte-preprocess
           - sveltia-cms
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
 jobs:
   init:
@@ -153,7 +154,8 @@ jobs:
           - svelte-loader
           - svelte-preprocess
           - sveltia-cms
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
       fail-fast: false
     steps:

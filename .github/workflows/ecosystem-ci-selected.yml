@@ -56,7 +56,8 @@ on:
           - svelte-loader
           - svelte-preprocess
           - sveltia-cms
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
       suiteBranch:
         description: "suite repo branch to test (empty = default branch)"

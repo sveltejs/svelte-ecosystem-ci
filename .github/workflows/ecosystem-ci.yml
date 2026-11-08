@@ -45,7 +45,8 @@ on:
 jobs:
   test-ecosystem:
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    # pinned: Playwright (used by many suites) does not support ubuntu-26.04, which ubuntu-latest now points to
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         suite:
@@ -75,9 +76,10 @@ jobs:
         with:
           node-version: ^24.11.1
         id: setup-node
-      - run: corepack enable
-      - run: pnpm --version
-      - run: pnpm i --frozen-lockfile
+      - run: corepack enable yarn # the storybook suite uses yarn
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          require-lockfile: true
       - run: >-
           node ecosystem-ci.ts
           "--$REF_TYPE" "$REF"

@@ -53,23 +53,25 @@ on:
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
 jobs:
   init:
-    runs-on: ubuntu-latest
+    # pinned: Playwright (used by many suites) does not support ubuntu-26.04, which ubuntu-latest now points to
+    runs-on: ubuntu-24.04
     outputs:
       comment-id: ${{ steps.create-comment.outputs.result }}
     permissions: {}
     steps:
       - id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ secrets.ECOSYSTEM_CI_GITHUB_APP_ID }}
           private-key: ${{ secrets.ECOSYSTEM_CI_GITHUB_APP_PRIVATE_KEY }}
           repositories: svelte
       - id: create-comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           result-encoding: string
@@ -87,7 +89,7 @@ jobs:
 
   execute-selected-suite:
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: init
     if: "inputs.suite != '-'"
     outputs:
@@ -95,15 +97,16 @@ jobs:
     permissions:
       contents: read # to clone the repo
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ^24.11.1
-      - run: corepack enable
-      - run: pnpm --version
-      - run: pnpm i --frozen-lockfile
+      - run: corepack enable yarn # the storybook suite uses yarn
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          require-lockfile: true
       - run: >-
-          pnpm tsx ecosystem-ci.ts
+          node ecosystem-ci.ts
           --branch "$BRANCH_NAME"
           --repo "$REPO"
           $(if [ -n "$COMMIT" ] ; then echo "--commit $COMMIT"; fi)
@@ -120,11 +123,11 @@ jobs:
           echo "ref=$REF" >> $GITHUB_OUTPUT
         env:
           COMMIT: ${{ inputs.commit }}
-        working-directory: ${{ inputs.commit && '.' || 'workspace/svelte' }}
+        working-directory: ${{ inputs.commit && '.' || format('{0}/workspace/svelte', runner.temp) }}
 
   execute-all:
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: init
     if: "inputs.suite == '-'"
     outputs:
@@ -149,19 +152,21 @@ jobs:
           - svelte-eslint-parser
           - svelte-loader
           - svelte-preprocess
-          - sveltekit
+          - sveltekit-build
+          - sveltekit-dev
           - vite-plugin-svelte
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ^24.11.1
-      - run: corepack enable
-      - run: pnpm --version
-      - run: pnpm i --frozen-lockfile
+      - run: corepack enable yarn # the storybook suite uses yarn
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          require-lockfile: true
       - run: >-
-          pnpm tsx ecosystem-ci.ts
+          node ecosystem-ci.ts
           --branch "$BRANCH_NAME"
           --repo "$REPO"
           $(if [ -n "$COMMIT" ] ; then echo "--commit $COMMIT"; fi)
@@ -178,23 +183,23 @@ jobs:
           echo "ref=$REF" >> $GITHUB_OUTPUT
         env:
           COMMIT: ${{ inputs.commit }}
-        working-directory: ${{ inputs.commit && '.' || 'workspace/svelte' }}
+        working-directory: ${{ inputs.commit && '.' || format('{0}/workspace/svelte', runner.temp) }}
 
   update-comment:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [init, execute-selected-suite, execute-all]
     if: always()
     permissions: {}
     steps:
       - id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ secrets.ECOSYSTEM_CI_GITHUB_APP_ID }}
           private-key: ${{ secrets.ECOSYSTEM_CI_GITHUB_APP_PRIVATE_KEY }}
           repositories: |
             svelte
             svelte-ecosystem-ci
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |

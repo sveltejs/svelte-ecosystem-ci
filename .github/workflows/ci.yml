@@ -4,10 +4,6 @@ env:
   # 7 GiB by default on GitHub, setting to 6 GiB
   # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
   NODE_OPTIONS: --max-old-space-size=6144
-  # configure corepack to be strict but not download newer versions or change anything
-  COREPACK_DEFAULT_TO_LATEST: 0
-  COREPACK_ENABLE_AUTO_PIN: 0
-  COREPACK_ENABLE_STRICT: 1
   # see https://turbo.build/repo/docs/telemetry#how-do-i-opt-out
   TURBO_TELEMETRY_DISABLED: 1
   DO_NOT_TRACK: 1
@@ -22,23 +18,19 @@ on:
 jobs:
   ci:
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    # pinned: Playwright (used by many suites) does not support ubuntu-26.04, which ubuntu-latest now points to
+    runs-on: ubuntu-24.04
     permissions:
       contents: read # to clone the repo
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ^24.11.1
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v4
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          node-version: ^24.11.1
-          cache: "pnpm"
-          cache-dependency-path: "**/pnpm-lock.yaml"
-      - name: install
-        run: pnpm install --frozen-lockfile --prefer-offline
+          require-lockfile: true
+          cache: true
       - name: format
         run: pnpm format
       - name: lint

@@ -8,6 +8,8 @@ import {
 	setupSvelteRepo,
 	buildSvelte,
 	bisectSvelte,
+	getPermanentRef,
+	useRegistryBuild,
 	parseSvelteMajor,
 	parseMajorVersion,
 } from './utils.ts'
@@ -25,23 +27,16 @@ cli
 	.option('--commit <commit>', 'svelte commit sha to use')
 	.option('--release <version>', 'svelte release to use from npm registry')
 	.action(async (suites, options: CommandOptions) => {
-		if (options.commit) {
-			const url = `https://pkg.pr.new/svelte@${options.commit}`
-
-			const { status } = await fetch(url)
-			if (status === 200) {
-				options.release = url
-				delete options.commit
-
-				console.log(`continuous release available on ${url}`)
-			}
-		}
 		const { root, sveltePath, workspace } = await setupEnvironment()
 		const suitesToRun = getSuitesToRun(suites, root)
 		let svelteMajor
 		if (!options.release) {
 			await setupSvelteRepo(options)
-			await buildSvelte({ verify: options.verify })
+			const prebuilt =
+				!options.verify && (await useRegistryBuild(await getPermanentRef()))
+			if (!prebuilt) {
+				await buildSvelte({ verify: options.verify })
+			}
 			svelteMajor = parseSvelteMajor(sveltePath)
 		} else {
 			svelteMajor = parseMajorVersion(options.release)

@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath, pathToFileURL } from 'url'
-import { execaCommand } from 'execa'
+import { spawn } from 'child_process'
 import type {
 	EnvironmentData,
 	Overrides,
@@ -11,8 +11,8 @@ import type {
 	Task,
 } from './types.d.ts'
 import { detect, AGENTS, getCommand, serializeCommand } from '@antfu/ni'
-import * as actionsCore from '@actions/core'
-import * as semver from 'semver'
+import * as yaml from 'yaml'
+import { stringify_package_json } from './package-json.ts'
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS
 
@@ -31,43 +31,48 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		'',
 	)
 
+	const line = `${cwd} $> ${cmd}`
 	if (isGitHubActions) {
-		actionsCore.startGroup(`${cwd} $> ${cmd}`)
+		// https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines
+		const escaped = line
+			.replace(/%/g, '%25')
+			.replace(/\r/g, '%0D')
+			.replace(/\n/g, '%0A')
+		console.log(`::group::${escaped}`)
 	} else {
-		console.log(`${cwd} $> ${cmd}`)
+		console.log(line)
 	}
 
-	const proc = execaCommand(cmd, {
+	const [command, ...args] = cmd.trim().split(/ +/)
+	const proc = spawn(command, args, {
 		env,
-		stdio: 'pipe',
 		cwd,
+		stdio: ['inherit', 'pipe', 'inherit'],
 	})
-	if (proc.stdin) process.stdin.pipe(proc.stdin)
-	if (proc.stdout) proc.stdout.pipe(process.stdout)
-	if (proc.stderr) proc.stderr.pipe(process.stderr)
-
-	let result
-	try {
-		result = await proc
-	} catch (error) {
-		// Since we already piped the io to the parent process, we remove the duplicated
-		// messages here so it's easier to read the error message.
-		if (error.stdout) error.stdout = 'value removed by svelte-ecosystem-ci'
-		if (error.stderr) error.stderr = 'value removed by svelte-ecosystem-ci'
-		if (error.stdio) error.stdio = ['value removed by svelte-ecosystem-ci']
-		throw error
+	let stdout = ''
+	proc.stdout.on('data', (chunk) => {
+		stdout += chunk
+		process.stdout.write(chunk)
+	})
+	const code = await new Promise((resolve, reject) => {
+		proc.on('error', reject)
+		proc.on('close', resolve)
+	})
+	if (code !== 0) {
+		throw new Error(`Command failed with exit code ${code}: ${cmd}`)
 	}
 
 	if (isGitHubActions) {
-		actionsCore.endGroup()
+		console.log('::endgroup::')
 	}
 
-	return result.stdout
+	return stdout.replace(/\r?\n$/, '')
 }
 
 export async function setupEnvironment(): Promise<EnvironmentData> {
 	const root = dirnameFrom(import.meta.url)
-	const workspace = path.resolve(root, 'workspace')
+	// outside the repo on CI so the suites cannot resolve our own node_modules
+	const workspace = path.resolve(process.env.RUNNER_TEMP ?? root, 'workspace')
 	sveltePath = path.resolve(workspace, 'svelte')
 	cwd = process.cwd()
 	env = {
@@ -79,6 +84,7 @@ export async function setupEnvironment(): Promise<EnvironmentData> {
 		ECOSYSTEM_CI: 'true', // flag for tests, can be used to conditionally skip irrelevant tests.
 		TURBO_TELEMETRY_DISABLED: '1', //   # see https://turbo.build/repo/docs/telemetry#how-do-i-opt-out
 		DO_NOT_TRACK: '1',
+		pnpm_config_verify_deps_before_run: 'false', // `pnpm tsx` used to set this, without it pnpm 11+ reinstalls before every `pnpm run`
 	}
 	initWorkspace(workspace)
 	return { root, workspace, sveltePath, cwd, env }
@@ -120,7 +126,7 @@ export async function setupRepo(options: RepoOptions) {
 
 	let needClone = true
 	if (fs.existsSync(dir)) {
-		const _cwd = cwd
+		const previousCwd = cwd
 		cd(dir)
 		let currentClonedRepo: string | undefined
 		try {
@@ -135,7 +141,7 @@ export async function setupRepo(options: RepoOptions) {
 				needClone = false
 			}
 		}
-		cd(_cwd)
+		cd(previousCwd)
 
 		if (needClone) {
 			fs.rmSync(dir, { recursive: true, force: true })
@@ -153,11 +159,11 @@ export async function setupRepo(options: RepoOptions) {
 		await $`git remote set-branches origin ${branch}`
 	}
 	await $`git fetch ${shallow ? '--depth=1 --no-tags' : '--tags'} origin ${
-		tag ? `tag ${tag}` : `${commit || branch}`
+		tag ? `tag ${tag}` : commit || branch
 	}`
 	if (shallow) {
 		await $`git -c advice.detachedHead=false checkout ${
-			tag ? `tags/${tag}` : `${commit || branch}`
+			tag ? `tags/${tag}` : commit || branch
 		}`
 	} else {
 		await $`git checkout ${branch}`
@@ -200,7 +206,7 @@ function toCommand(
 				}
 			} else {
 				throw new Error(
-					`invalid task, expected string or function but got ${typeof task}: ${task}`,
+					`invalid task, expected string or function but got ${typeof task}`,
 				)
 			}
 		}
@@ -332,20 +338,6 @@ export async function setupSvelteRepo(options: Partial<RepoOptions>) {
 				`expected  "name" field of ${repo}/package.json to be "${expected}", but got "${name}".`,
 			)
 		}
-		const needsWrite = await overridePackageManagerVersion(
-			rootPackageJson,
-			'pnpm',
-		)
-		if (needsWrite) {
-			fs.writeFileSync(
-				rootPackageJsonFile,
-				JSON.stringify(rootPackageJson, null, 2),
-				'utf-8',
-			)
-			if (rootPackageJson.devDependencies?.pnpm) {
-				await $`pnpm install -Dw pnpm --lockfile-only`
-			}
-		}
 	} catch (e) {
 		throw new Error(`Failed to setup svelte repo`, { cause: e })
 	}
@@ -360,6 +352,47 @@ export async function getPermanentRef() {
 		console.warn(`Failed to obtain perm ref. ${e}`)
 		return undefined
 	}
+}
+
+const REGISTRY = 'https://pkg.svelte.dev'
+
+/**
+ * Unpacks the build pkg.svelte.dev serves for a svelte commit over packages/svelte of the
+ * checkout. False when the registry does not serve that commit (a fork) or has not finished
+ * building it in time, so the caller builds locally instead.
+ */
+export async function useRegistryBuild(sha: string | undefined) {
+	if (!sha) return false
+	const url = `${REGISTRY}/svelte/c/${sha}`
+	let tarball: string | undefined
+	for (let attempt = 0; attempt < 4 && !tarball; attempt++) {
+		const res = await fetch(url, { method: 'HEAD', redirect: 'manual' })
+		const location = res.headers.get('location')
+		if (location && res.status >= 300 && res.status < 400) {
+			tarball = location
+		} else if (res.status !== 503) {
+			console.log(`${url} answered ${res.status}, building svelte locally`)
+			return false
+		} else {
+			const wait = Number(res.headers.get('retry-after')) || 15
+			console.log(`${url} is still building, retrying in ${wait}s`)
+			await new Promise((resolve) => setTimeout(resolve, wait * 1000))
+		}
+	}
+	if (!tarball) {
+		console.log(
+			`${url} did not finish building in time, building svelte locally`,
+		)
+		return false
+	}
+	console.log(`\nunpacking ${tarball}`)
+	const file = path.join(sveltePath, 'svelte.tgz')
+	const res = await fetch(tarball)
+	fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()))
+	cd(sveltePath)
+	await $`tar xzf ${file} --strip-components=1 -C packages/svelte`
+	fs.rmSync(file)
+	return true
 }
 
 export async function buildSvelte({ verify = false }) {
@@ -494,7 +527,8 @@ async function patchLinkedPackageWorkspaceDeps(
 		if (!isLocalOverride(localPath)) continue
 		const pkgFile = path.join(localPath, 'package.json')
 		if (!fs.existsSync(pkgFile)) continue
-		const pkg = JSON.parse(await fs.promises.readFile(pkgFile, 'utf-8'))
+		const original = await fs.promises.readFile(pkgFile, 'utf-8')
+		const pkg = JSON.parse(original)
 		let modified = false
 		for (const field of PACKAGE_DEP_FIELDS) {
 			const deps = pkg[field]
@@ -514,54 +548,11 @@ async function patchLinkedPackageWorkspaceDeps(
 		if (modified) {
 			await fs.promises.writeFile(
 				pkgFile,
-				JSON.stringify(pkg, null, 2),
+				stringify_package_json(pkg, original),
 				'utf-8',
 			)
 		}
 	}
-}
-
-/**
- * utility to override packageManager version
- *
- * @param pkg parsed package.json
- * @param pm package manager to override eg. `pnpm`
- * @returns {boolean} true if pkg was updated, caller is responsible for writing it to disk
- */
-async function overridePackageManagerVersion(
-	pkg: { [key: string]: any },
-	pm: string,
-): Promise<boolean> {
-	const versionInUse = pkg.packageManager?.startsWith(`${pm}@`)
-		? pkg.packageManager.substring(pm.length + 1)
-		: await $`${pm} --version`
-	let overrideWithVersion: string | null = null
-	if (pm === 'pnpm') {
-		if (semver.eq(versionInUse, '7.18.0')) {
-			// avoid bug with absolute overrides in pnpm 7.18.0
-			overrideWithVersion = '7.18.1'
-		}
-	}
-	if (overrideWithVersion) {
-		console.warn(
-			`detected ${pm}@${versionInUse} used in ${pkg.name}, changing pkg.packageManager and pkg.engines.${pm} to enforce use of ${pm}@${overrideWithVersion}`,
-		)
-		// corepack reads this and uses pnpm @ newVersion then
-		pkg.packageManager = `${pm}@${overrideWithVersion}`
-		if (!pkg.engines) {
-			pkg.engines = {}
-		}
-		pkg.engines[pm] = overrideWithVersion
-
-		if (pkg.devDependencies?.[pm]) {
-			// if for some reason the pm is in devDependencies, that would be a local version that'd be preferred over our forced global
-			// so ensure it here too.
-			pkg.devDependencies[pm] = overrideWithVersion
-		}
-
-		return true
-	}
-	return false
 }
 
 export async function applyPackageOverrides(
@@ -589,8 +580,6 @@ export async function applyPackageOverrides(
 	// pnpm@6, pnpm@7 => pnpm
 	const pm = agent?.split('@')[0]
 
-	await overridePackageManagerVersion(pkg, pm)
-
 	if (pm === 'pnpm') {
 		const overridesWithoutSpecialSyntax = Object.fromEntries(
 			Object.entries(overrides)
@@ -605,12 +594,24 @@ export async function applyPackageOverrides(
 			...pkg.devDependencies,
 			...overridesWithoutSpecialSyntax, // overrides must be present in devDependencies or dependencies otherwise they may not work
 		}
-		if (!pkg.pnpm) {
-			pkg.pnpm = {}
-		}
-		pkg.pnpm.overrides = {
-			...pkg.pnpm.overrides,
-			...overrides,
+		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
+		if (fs.existsSync(workspaceFile)) {
+			const workspaceConfig = yaml.parse(
+				fs.readFileSync(workspaceFile, 'utf-8'),
+			)
+			workspaceConfig.overrides = {
+				...workspaceConfig.overrides,
+				...overrides,
+			}
+			fs.writeFileSync(workspaceFile, yaml.stringify(workspaceConfig), 'utf-8')
+		} else {
+			if (!pkg.pnpm) {
+				pkg.pnpm = {}
+			}
+			pkg.pnpm.overrides = {
+				...pkg.pnpm.overrides,
+				...overrides,
+			}
 		}
 	} else if (pm === 'yarn') {
 		pkg.resolutions = {
@@ -635,7 +636,12 @@ export async function applyPackageOverrides(
 		throw new Error(`unsupported package manager detected: ${pm}`)
 	}
 	const pkgFile = path.join(dir, 'package.json')
-	await fs.promises.writeFile(pkgFile, JSON.stringify(pkg, null, 2), 'utf-8')
+	const original = await fs.promises.readFile(pkgFile, 'utf-8')
+	await fs.promises.writeFile(
+		pkgFile,
+		stringify_package_json(pkg, original),
+		'utf-8',
+	)
 
 	// use of `ni` command here could cause lockfile violation errors so fall back to native commands that avoid these
 	if (pm === 'pnpm') {
@@ -653,7 +659,7 @@ export async function applyPackageOverrides(
 				)
 			}
 		}
-		await $`pnpm install --prefer-frozen-lockfile --strict-peer-dependencies false`
+		await $`pnpm install --no-frozen-lockfile --strict-peer-dependencies false`
 	} else if (pm === 'yarn') {
 		await $`yarn install`
 	} else if (pm === 'npm') {

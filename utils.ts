@@ -71,7 +71,8 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 
 export async function setupEnvironment(): Promise<EnvironmentData> {
 	const root = dirnameFrom(import.meta.url)
-	// outside the repo on CI so the suites cannot resolve our own node_modules
+	// on CI the workspace lives in RUNNER_TEMP, outside the repo, so suites
+	// cannot resolve our own node_modules or pick up our config files
 	const workspace = path.resolve(process.env.RUNNER_TEMP ?? root, 'workspace')
 	sveltePath = path.resolve(workspace, 'svelte')
 	cwd = process.cwd()
@@ -94,6 +95,12 @@ function initWorkspace(workspace: string) {
 	if (!fs.existsSync(workspace)) {
 		fs.mkdirSync(workspace, { recursive: true })
 	}
+	if (process.env.RUNNER_TEMP) {
+		// nothing to shield the suites from, and a parent tsconfig.json makes
+		// TypeScript 6 refuse to compile single files (`tsc <file>`, TS5112)
+		return
+	}
+	// locally the workspace is inside this repo, stop suites from using our config
 	const eslintrc = path.join(workspace, '.eslintrc.json')
 	if (!fs.existsSync(eslintrc)) {
 		fs.writeFileSync(eslintrc, '{"root":true}\n', 'utf-8')

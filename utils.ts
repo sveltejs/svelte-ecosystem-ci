@@ -54,12 +54,12 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		stdout += chunk
 		process.stdout.write(chunk)
 	})
-	const code = await new Promise((resolve, reject) => {
+	const code = await new Promise<number | null>((resolve, reject) => {
 		proc.on('error', reject)
 		proc.on('close', resolve)
 	})
 	if (code !== 0) {
-		throw new Error(`Command failed with exit code ${code}: ${cmd}`)
+		throw new Error(`Command failed with exit code ${String(code)}: ${cmd}`)
 	}
 
 	if (isGitHubActions) {

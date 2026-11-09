@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "description": "svelte Ecosystem CI",
   "scripts": {
-    "prepare": "pnpm exec simple-git-hooks",
+    "prepare": "git config core.hooksPath .githooks",
     "lint": "oxlint",
     "lint:fix": "pnpm lint --fix",
     "typecheck": "tsc",
@@ -13,17 +13,6 @@
     "test:self": "node ecosystem-ci.ts _selftest",
     "test": "node ecosystem-ci.ts",
     "bisect": "node ecosystem-ci.ts bisect"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm exec lint-staged --concurrent false"
-  },
-  "lint-staged": {
-    "*": [
-      "oxfmt --no-error-on-unmatched-pattern"
-    ],
-    "*.{js,ts}": [
-      "oxlint --fix"
-    ]
   },
   "packageManager": "pnpm@11.22.0+sha512.1ff870c4c6133dfd88fb2afc46dd13d47f09c9794b438c6fdb47ca98caf3bc16381ee0be93a091b8e3824cf01f889f46d7d9e20910fb0be1ab0fb5baa80dd621",
   "type": "module",
@@ -48,11 +37,9 @@
     "@antfu/ni": "^24.3.0",
     "@types/node": "^22.14.1",
     "eslint-plugin-n": "^18.4.0",
-    "lint-staged": "^15.5.1",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
     "oxlint-tsgolint": "^7.0.2003",
-    "simple-git-hooks": "^2.12.1",
     "typescript": "^5.8.3"
   }
 }

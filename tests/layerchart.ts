@@ -13,7 +13,7 @@ export async function test(options: RunOptions) {
 		],
 		overrides: {
 			'@sveltejs/vite-plugin-svelte': true,
-			'@sveltejs/kit': false, // layerchart is still on kit 2
+			'@sveltejs/kit': true,
 			'@sveltejs/load-config': true,
 			'svelte-check': true,
 		},

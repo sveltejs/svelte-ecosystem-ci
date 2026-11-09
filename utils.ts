@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath, pathToFileURL } from 'url'
-import { execaCommand } from 'execa'
+import { spawn } from 'child_process'
 import type {
 	EnvironmentData,
 	Overrides,
@@ -43,37 +43,37 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
 		console.log(line)
 	}
 
-	const proc = execaCommand(cmd, {
+	const [command, ...args] = cmd.trim().split(/ +/)
+	const proc = spawn(command, args, {
 		env,
-		stdio: 'pipe',
 		cwd,
+		stdio: ['inherit', 'pipe', 'inherit'],
 	})
-	if (proc.stdin) process.stdin.pipe(proc.stdin)
-	if (proc.stdout) proc.stdout.pipe(process.stdout)
-	if (proc.stderr) proc.stderr.pipe(process.stderr)
-
-	let result
-	try {
-		result = await proc
-	} catch (error) {
-		// Since we already piped the io to the parent process, we remove the duplicated
-		// messages here so it's easier to read the error message.
-		if (error.stdout) error.stdout = 'value removed by svelte-ecosystem-ci'
-		if (error.stderr) error.stderr = 'value removed by svelte-ecosystem-ci'
-		if (error.stdio) error.stdio = ['value removed by svelte-ecosystem-ci']
-		throw error
+	let stdout = ''
+	proc.stdout.on('data', (chunk) => {
+		stdout += chunk
+		process.stdout.write(chunk)
+	})
+	const code = await new Promise<number | null>((resolve, reject) => {
+		proc.on('error', reject)
+		proc.on('close', resolve)
+	})
+	if (code !== 0) {
+		throw new Error(`Command failed with exit code ${code}: ${cmd}`)
 	}
 
 	if (isGitHubActions) {
 		console.log('::endgroup::')
 	}
 
-	return result.stdout
+	return stdout.replace(/\r?\n$/, '')
 }
 
 export async function setupEnvironment(): Promise<EnvironmentData> {
 	const root = dirnameFrom(import.meta.url)
-	const workspace = path.resolve(root, 'workspace')
+	// on CI the workspace lives in RUNNER_TEMP, outside the repo, so suites
+	// cannot resolve our own node_modules or pick up our config files
+	const workspace = path.resolve(process.env.RUNNER_TEMP ?? root, 'workspace')
 	sveltePath = path.resolve(workspace, 'svelte')
 	cwd = process.cwd()
 	env = {
@@ -95,6 +95,12 @@ function initWorkspace(workspace: string) {
 	if (!fs.existsSync(workspace)) {
 		fs.mkdirSync(workspace, { recursive: true })
 	}
+	if (process.env.RUNNER_TEMP) {
+		// nothing to shield the suites from, and a parent tsconfig.json makes
+		// TypeScript 6 refuse to compile single files (`tsc <file>`, TS5112)
+		return
+	}
+	// locally the workspace is inside this repo, stop suites from using our config
 	const eslintrc = path.join(workspace, '.eslintrc.json')
 	if (!fs.existsSync(eslintrc)) {
 		fs.writeFileSync(eslintrc, '{"root":true}\n', 'utf-8')
@@ -127,7 +133,7 @@ export async function setupRepo(options: RepoOptions) {
 
 	let needClone = true
 	if (fs.existsSync(dir)) {
-		const _cwd = cwd
+		const previousCwd = cwd
 		cd(dir)
 		let currentClonedRepo: string | undefined
 		try {
@@ -142,7 +148,7 @@ export async function setupRepo(options: RepoOptions) {
 				needClone = false
 			}
 		}
-		cd(_cwd)
+		cd(previousCwd)
 
 		if (needClone) {
 			fs.rmSync(dir, { recursive: true, force: true })
@@ -160,11 +166,11 @@ export async function setupRepo(options: RepoOptions) {
 		await $`git remote set-branches origin ${branch}`
 	}
 	await $`git fetch ${shallow ? '--depth=1 --no-tags' : '--tags'} origin ${
-		tag ? `tag ${tag}` : `${commit || branch}`
+		tag ? `tag ${tag}` : commit || branch
 	}`
 	if (shallow) {
 		await $`git -c advice.detachedHead=false checkout ${
-			tag ? `tags/${tag}` : `${commit || branch}`
+			tag ? `tags/${tag}` : commit || branch
 		}`
 	} else {
 		await $`git checkout ${branch}`
@@ -207,7 +213,7 @@ function toCommand(
 				}
 			} else {
 				throw new Error(
-					`invalid task, expected string or function but got ${typeof task}: ${task}`,
+					`invalid task, expected string or function but got ${typeof task}`,
 				)
 			}
 		}

@@ -668,10 +668,51 @@ export async function applyPackageOverrides(
 		}
 		await $`pnpm install --no-frozen-lockfile --strict-peer-dependencies false`
 	} else if (pm === 'yarn') {
+		preapproveLocalOverrideDependencies(dir, overrides)
 		await $`yarn install`
 	} else if (pm === 'npm') {
 		await $`npm install`
 	}
+}
+
+/** Exempts the dependencies of local overrides from yarn's `npmMinimalAgeGate`. */
+function preapproveLocalOverrideDependencies(
+	dir: string,
+	overrides: Overrides,
+) {
+	const rcFile = path.join(dir, '.yarnrc.yml')
+	if (!fs.existsSync(rcFile)) {
+		return
+	}
+	const rc = yaml.parseDocument(fs.readFileSync(rcFile, 'utf-8'))
+	if (!rc.has('npmMinimalAgeGate')) {
+		return
+	}
+	const dependencies = new Set<string>()
+	for (const override of Object.values(overrides)) {
+		if (typeof override !== 'string' || !override.startsWith('file:')) {
+			continue
+		}
+		const pkgFile = path.join(override.slice('file:'.length), 'package.json')
+		if (!fs.existsSync(pkgFile)) {
+			continue
+		}
+		const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf-8'))
+		for (const name of Object.keys({
+			...pkg.dependencies,
+			...pkg.optionalDependencies,
+		})) {
+			dependencies.add(name)
+		}
+	}
+	if (dependencies.size === 0) {
+		return
+	}
+	const preapproved: string[] = rc.toJS().npmPreapprovedPackages ?? []
+	rc.set('npmPreapprovedPackages', [
+		...new Set([...preapproved, ...dependencies]),
+	])
+	fs.writeFileSync(rcFile, rc.toString(), 'utf-8')
 }
 
 export function dirnameFrom(url: string) {

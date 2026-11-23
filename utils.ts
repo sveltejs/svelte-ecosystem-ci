@@ -601,8 +601,6 @@ export async function applyPackageOverrides(
 			...pkg.devDependencies,
 			...overridesWithoutSpecialSyntax, // overrides must be present in devDependencies or dependencies otherwise they may not work
 		}
-		// overrides written where this pnpm version does not read them are
-		// silently ignored and the suite passes against svelte from the registry
 		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
 		const hasWorkspaceFile = fs.existsSync(workspaceFile)
 		const pnpmMajor = parseMajorVersion(await $`pnpm --version`)

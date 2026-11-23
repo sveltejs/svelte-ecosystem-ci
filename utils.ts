@@ -81,6 +81,7 @@ export async function setupEnvironment(): Promise<EnvironmentData> {
 		CI: 'true',
 		TURBO_FORCE: 'true', // disable turbo caching, ecosystem-ci modifies things and we don't want replays
 		YARN_ENABLE_IMMUTABLE_INSTALLS: 'false', // to avoid errors with mutated lockfile due to overrides
+		YARN_NPM_MINIMAL_AGE_GATE: '0', // a suite's age gate would make yarn refuse dependencies of the locally built packages that were published recently
 		NODE_OPTIONS: '--max-old-space-size=6144', // GITHUB CI has 7GB max, stay below
 		ECOSYSTEM_CI: 'true', // flag for tests, can be used to conditionally skip irrelevant tests.
 		TURBO_TELEMETRY_DISABLED: '1', //   # see https://turbo.build/repo/docs/telemetry#how-do-i-opt-out
@@ -679,51 +680,10 @@ export async function applyPackageOverrides(
 		await $`pnpm install --no-frozen-lockfile --strict-peer-dependencies false`
 		assertPnpmOverridesApplied(dir, overrides)
 	} else if (pm === 'yarn') {
-		preapproveLocalOverrideDependencies(dir, overrides)
 		await $`yarn install`
 	} else if (pm === 'npm') {
 		await $`npm install`
 	}
-}
-
-/** Exempts the dependencies of local overrides from yarn's `npmMinimalAgeGate`. */
-function preapproveLocalOverrideDependencies(
-	dir: string,
-	overrides: Overrides,
-) {
-	const rcFile = path.join(dir, '.yarnrc.yml')
-	if (!fs.existsSync(rcFile)) {
-		return
-	}
-	const rc = yaml.parseDocument(fs.readFileSync(rcFile, 'utf-8'))
-	if (!rc.has('npmMinimalAgeGate')) {
-		return
-	}
-	const dependencies = new Set<string>()
-	for (const override of Object.values(overrides)) {
-		if (typeof override !== 'string' || !override.startsWith('file:')) {
-			continue
-		}
-		const pkgFile = path.join(override.slice('file:'.length), 'package.json')
-		if (!fs.existsSync(pkgFile)) {
-			continue
-		}
-		const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf-8'))
-		for (const name of Object.keys({
-			...pkg.dependencies,
-			...pkg.optionalDependencies,
-		})) {
-			dependencies.add(name)
-		}
-	}
-	if (dependencies.size === 0) {
-		return
-	}
-	const preapproved: string[] = rc.toJS().npmPreapprovedPackages ?? []
-	rc.set('npmPreapprovedPackages', [
-		...new Set([...preapproved, ...dependencies]),
-	])
-	fs.writeFileSync(rcFile, rc.toString(), 'utf-8')
 }
 
 /**

@@ -603,12 +603,14 @@ export async function applyPackageOverrides(
 		}
 		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
 		const hasWorkspaceFile = fs.existsSync(workspaceFile)
-		const pnpmMajor = parseMajorVersion(await $`pnpm --version`)
-		// pnpm 11 and newer read the workspace file, pnpm 9 and older read
-		// package.json, pnpm 10 reads package.json overrides when it has any
+		const pnpmVersion = parsePnpmVersion(await $`pnpm --version`)
+		// pnpm 11 and newer read the workspace file, pnpm before 10.5.1 reads
+		// package.json, in between package.json overrides win when it has any
 		const useWorkspaceFile =
-			pnpmMajor >= 11 ||
-			(pnpmMajor === 10 && hasWorkspaceFile && !pkg.pnpm?.overrides)
+			pnpmVersion.major >= 11 ||
+			(hasWorkspaceFile &&
+				!pkg.pnpm?.overrides &&
+				compareVersions(pnpmVersion, { major: 10, minor: 5, patch: 1 }) >= 0)
 		if (useWorkspaceFile) {
 			const workspaceConfig =
 				(hasWorkspaceFile &&
@@ -687,26 +689,49 @@ export async function applyPackageOverrides(
  * throws when pnpm left an override out of the lockfile, where the suite
  * would test the version from the registry
  */
-function assertPnpmOverridesApplied(
+export function assertPnpmOverridesApplied(
 	dir: string,
 	overrides: Record<string, unknown>,
 ) {
 	const lockFile = path.join(dir, 'pnpm-lock.yaml')
 	if (!fs.existsSync(lockFile)) {
+		console.warn(
+			`no pnpm-lock.yaml in ${dir}, cannot check that overrides were applied`,
+		)
 		return
 	}
 	// pnpm 11 lockfiles start with a second yaml document
 	const applied = yaml
 		.parseAllDocuments(fs.readFileSync(lockFile, 'utf-8'))
 		.map((doc) => doc.toJS()?.overrides)
-	const missing = Object.keys(overrides).filter(
-		(name) => !applied.some((used) => used?.[name]),
+	const missing = Object.entries(overrides).filter(
+		([name, value]) => !applied.some((used) => used?.[name] === value),
 	)
 	if (missing.length > 0) {
 		throw new Error(
-			`pnpm did not apply the overrides for ${missing.join(', ')} in ${dir}`,
+			`pnpm did not apply the overrides for ${missing.map(([name]) => name).join(', ')} in ${dir}`,
 		)
 	}
+}
+
+interface Version {
+	major: number
+	minor: number
+	patch: number
+}
+
+/** @param output stdout of `pnpm --version`, the version is on its last line */
+export function parsePnpmVersion(output: string): Version {
+	const match = /^(\d+)\.(\d+)\.(\d+)/.exec(output.trim().split('\n').pop()!)
+	if (!match) {
+		throw new Error(`failed to parse pnpm version from "${output}"`)
+	}
+	const [major, minor, patch] = match.slice(1).map(Number)
+	return { major, minor, patch }
+}
+
+function compareVersions(a: Version, b: Version) {
+	return a.major - b.major || a.minor - b.minor || a.patch - b.patch
 }
 
 export function dirnameFrom(url: string) {

@@ -81,7 +81,6 @@ export async function setupEnvironment(): Promise<EnvironmentData> {
 		CI: 'true',
 		TURBO_FORCE: 'true', // disable turbo caching, ecosystem-ci modifies things and we don't want replays
 		YARN_ENABLE_IMMUTABLE_INSTALLS: 'false', // to avoid errors with mutated lockfile due to overrides
-		YARN_NPM_MINIMAL_AGE_GATE: '0', // a suite's age gate would make yarn refuse dependencies of the locally built packages that were published recently
 		NODE_OPTIONS: '--max-old-space-size=6144', // GITHUB CI has 7GB max, stay below
 		ECOSYSTEM_CI: 'true', // flag for tests, can be used to conditionally skip irrelevant tests.
 		TURBO_TELEMETRY_DISABLED: '1', //   # see https://turbo.build/repo/docs/telemetry#how-do-i-opt-out
@@ -680,10 +679,28 @@ export async function applyPackageOverrides(
 		await $`pnpm install --no-frozen-lockfile --strict-peer-dependencies false`
 		assertPnpmOverridesApplied(dir, overrides)
 	} else if (pm === 'yarn') {
+		preapproveSveltePackages(dir)
 		await $`yarn install`
 	} else if (pm === 'npm') {
 		await $`npm install`
 	}
+}
+
+/**
+ * a suite's `npmMinimalAgeGate` would otherwise make yarn refuse recent
+ * releases of these when the locally built packages depend on them
+ */
+function preapproveSveltePackages(dir: string) {
+	const rcFile = path.join(dir, '.yarnrc.yml')
+	if (!fs.existsSync(rcFile)) {
+		return
+	}
+	const rc = yaml.parseDocument(fs.readFileSync(rcFile, 'utf-8'))
+	const preapproved: string[] = rc.toJS()?.npmPreapprovedPackages ?? []
+	rc.set('npmPreapprovedPackages', [
+		...new Set([...preapproved, 'svelte', '@sveltejs/*', 'esrap']),
+	])
+	fs.writeFileSync(rcFile, rc.toString(), 'utf-8')
 }
 
 /**

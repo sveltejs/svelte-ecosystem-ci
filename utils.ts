@@ -601,11 +601,21 @@ export async function applyPackageOverrides(
 			...pkg.devDependencies,
 			...overridesWithoutSpecialSyntax, // overrides must be present in devDependencies or dependencies otherwise they may not work
 		}
+		// overrides written where this pnpm version does not read them are
+		// silently ignored and the suite passes against svelte from the registry
 		const workspaceFile = path.join(dir, 'pnpm-workspace.yaml')
-		if (fs.existsSync(workspaceFile)) {
-			const workspaceConfig = yaml.parse(
-				fs.readFileSync(workspaceFile, 'utf-8'),
-			)
+		const hasWorkspaceFile = fs.existsSync(workspaceFile)
+		const pnpmMajor = parseMajorVersion(await $`pnpm --version`)
+		// pnpm 11 and newer read the workspace file, pnpm 9 and older read
+		// package.json, pnpm 10 reads package.json overrides when it has any
+		const useWorkspaceFile =
+			pnpmMajor >= 11 ||
+			(pnpmMajor === 10 && hasWorkspaceFile && !pkg.pnpm?.overrides)
+		if (useWorkspaceFile) {
+			const workspaceConfig =
+				(hasWorkspaceFile &&
+					yaml.parse(fs.readFileSync(workspaceFile, 'utf-8'))) ||
+				{}
 			workspaceConfig.overrides = {
 				...workspaceConfig.overrides,
 				...overrides,
@@ -667,10 +677,37 @@ export async function applyPackageOverrides(
 			}
 		}
 		await $`pnpm install --no-frozen-lockfile --strict-peer-dependencies false`
+		assertPnpmOverridesApplied(dir, overrides)
 	} else if (pm === 'yarn') {
 		await $`yarn install`
 	} else if (pm === 'npm') {
 		await $`npm install`
+	}
+}
+
+/**
+ * throws when pnpm left an override out of the lockfile, where the suite
+ * would test the version from the registry
+ */
+function assertPnpmOverridesApplied(
+	dir: string,
+	overrides: Record<string, unknown>,
+) {
+	const lockFile = path.join(dir, 'pnpm-lock.yaml')
+	if (!fs.existsSync(lockFile)) {
+		return
+	}
+	// pnpm 11 lockfiles start with a second yaml document
+	const applied = yaml
+		.parseAllDocuments(fs.readFileSync(lockFile, 'utf-8'))
+		.map((doc) => doc.toJS()?.overrides)
+	const missing = Object.keys(overrides).filter(
+		(name) => !applied.some((used) => used?.[name]),
+	)
+	if (missing.length > 0) {
+		throw new Error(
+			`pnpm did not apply the overrides for ${missing.join(', ')} in ${dir}`,
+		)
 	}
 }
 

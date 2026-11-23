@@ -5,7 +5,7 @@ export async function test(options: RunOptions) {
 	await runInRepo({
 		...options,
 		repo: 'pngwn/MDsveX',
-		build: 'pnpm -r build',
-		test: 'pnpm test',
+		build: 'pnpm --filter=!incremental-parse-test -r build',
+		test: 'pnpm test:run:vitest',
 	})
 }

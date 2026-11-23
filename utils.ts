@@ -679,10 +679,28 @@ export async function applyPackageOverrides(
 		await $`pnpm install --no-frozen-lockfile --strict-peer-dependencies false`
 		assertPnpmOverridesApplied(dir, overrides)
 	} else if (pm === 'yarn') {
+		preapproveSveltePackages(dir)
 		await $`yarn install`
 	} else if (pm === 'npm') {
 		await $`npm install`
 	}
+}
+
+/**
+ * a suite's `npmMinimalAgeGate` would otherwise make yarn refuse recent
+ * releases of these when the locally built packages depend on them
+ */
+function preapproveSveltePackages(dir: string) {
+	const rcFile = path.join(dir, '.yarnrc.yml')
+	if (!fs.existsSync(rcFile)) {
+		return
+	}
+	const rc = yaml.parseDocument(fs.readFileSync(rcFile, 'utf-8'))
+	const preapproved: string[] = rc.toJS()?.npmPreapprovedPackages ?? []
+	rc.set('npmPreapprovedPackages', [
+		...new Set([...preapproved, 'svelte', '@sveltejs/*', 'esrap']),
+	])
+	fs.writeFileSync(rcFile, rc.toString(), 'utf-8')
 }
 
 /**

@@ -687,6 +687,22 @@ export async function applyPackageOverrides(
 }
 
 /**
+ * dependencies of Svelte that we control
+ * @see https://github.com/sveltejs/svelte/blob/main/packages/svelte/package.json
+ */
+const SVELTE_PACKAGES = [
+	'svelte',
+	'@sveltejs/*',
+	'devalue',
+	'esm-env',
+	'esrap',
+	'is-reference',
+	'locate-character',
+	'magic-string',
+	'zimmerframe',
+]
+
+/**
  * a suite's `npmMinimalAgeGate` would otherwise make yarn refuse recent
  * releases of these when the locally built packages depend on them
  */
@@ -698,7 +714,7 @@ function preapproveSveltePackages(dir: string) {
 	const rc = yaml.parseDocument(fs.readFileSync(rcFile, 'utf-8'))
 	const preapproved: string[] = rc.toJS()?.npmPreapprovedPackages ?? []
 	rc.set('npmPreapprovedPackages', [
-		...new Set([...preapproved, 'svelte', '@sveltejs/*', 'esrap']),
+		...new Set([...preapproved, ...SVELTE_PACKAGES]),
 	])
 	fs.writeFileSync(rcFile, rc.toString(), 'utf-8')
 }

@@ -687,8 +687,7 @@ export async function applyPackageOverrides(
 }
 
 /**
- * svelte and its dependencies that svelte maintainers publish, yarn refuses
- * a recent release of any that is missing when a suite has an age gate
+ * dependencies of Svelte that we control
  * @see https://github.com/sveltejs/svelte/blob/main/packages/svelte/package.json
  */
 const SVELTE_PACKAGES = [
